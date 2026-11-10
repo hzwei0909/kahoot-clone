@@ -165,6 +165,12 @@
     questionEnd: () => playSound('questionEnd'),
     setPhase: (phase, startedAt = 0) => {
       currentPhaseStartedAt = startedAt || Date.now();
+      if (phase === 'result') {
+        Object.values(tracks).forEach(track => { track.pause(); track.volume = MUSIC_VOLUME; });
+        currentTrack = null;
+        currentTrackName = 'game';
+        return;
+      }
       playTrack(phase, Math.max(0, Date.now() - currentPhaseStartedAt));
     },
     game: () => playTrack('game'),

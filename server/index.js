@@ -106,7 +106,7 @@ app.post('/api/create-room', async (req, res) => {
     players: new Map(),
     hostId: null,
     currentQuestionIndex: -1,
-    status: 'waiting', // waiting | question | reveal | finished
+    status: 'waiting', // waiting | question | reveal | final-result | finished
     phase: 'start',
     phaseStartedAt: Date.now(),
     questionStartTime: null,
@@ -373,15 +373,22 @@ io.on('connection', (socket) => {
     io.to(room.code).emit('reveal', { correctIndex: q.correctIndex, optionStats, ranking });
 
     if (qIndex === room.questions.length - 1) {
-      room.status = 'finished';
-      room.phase = 'finish';
+      room.status = 'final-result';
+      room.phase = 'result';
       room.phaseStartedAt = Date.now();
       io.to(room.code).emit('game-phase', { phase: room.phase, startedAt: room.phaseStartedAt });
       const finalRanking = Array.from(room.players.values())
         .sort((a, b) => b.score - a.score)
         .map((p, i) => ({ id: p.id, rank: i + 1, nickname: p.nickname, avatar: p.avatar, score: p.score }));
-      // 给参与者留出一个完整的“本题结果”停留时间，再切换到最终领奖台。
-      setTimeout(() => io.to(room.code).emit('game-over', { ranking: finalRanking }), 3500);
+      // Kahoot 式流程：先完整展示最后一题结果和本题积分排名，再进入最终领奖台。
+      setTimeout(() => {
+        if (room.status !== 'final-result') return;
+        room.status = 'finished';
+        room.phase = 'finish';
+        room.phaseStartedAt = Date.now();
+        io.to(room.code).emit('game-phase', { phase: room.phase, startedAt: room.phaseStartedAt });
+        io.to(room.code).emit('game-over', { ranking: finalRanking });
+      }, 5000);
     }
   }
 
