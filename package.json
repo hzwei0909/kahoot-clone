@@ -1,0 +1,26 @@
+{
+  "name": "kahoot-clone",
+  "version": "1.0.0",
+  "description": "多人实时答题系统（类似Kahoot）",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node server/index.js"
+  },
+  "keywords": [
+    "kahoot",
+    "quiz",
+    "multiplayer",
+    "realtime"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.21.0",
+    "multer": "^2.5.0",
+    "qrcode": "^1.5.4",
+    "socket.io": "^4.8.0",
+    "uuid": "^11.0.0",
+    "xlsx": "^0.18.5"
+  }
+}

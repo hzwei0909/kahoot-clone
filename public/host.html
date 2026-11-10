@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>主持人 - 多人答题</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/effects.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; padding: 20px; }
+    .container { max-width: 900px; margin: 0 auto; } h1 { font-size: 24px; margin-bottom: 20px; }
+    .card { background: #1e293b; border-radius: 16px; padding: 24px; margin-bottom: 20px; }
+    label { display: block; margin-bottom: 6px; font-size: 14px; color: #94a3b8; }
+    input, textarea, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #e2e8f0; font-size: 16px; margin-bottom: 16px; }
+    textarea { min-height: 80px; resize: vertical; }
+    .btn { padding: 12px 24px; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; margin-right: 10px; margin-bottom: 10px; }
+    .btn-primary { background: #6366f1; color: white; } .btn-success { background: #10b981; color: white; } .btn-warning { background: #f59e0b; color: white; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .question-item { background: #0f172a; border-radius: 10px; padding: 16px; margin-bottom: 12px; border-left: 4px solid #6366f1; }
+    .option-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; } .option-row input[type="text"] { flex: 1; margin-bottom: 0; } .option-row input[type="radio"] { width: auto; margin: 0; }
+    #lobby, #game, #finished { display: none; } #setup { display: block; }
+    .players { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; } .player-chip { background: #334155; padding: 8px 14px; border-radius: 20px; font-size: 14px; }
+    .big-code { font-size: 48px; font-weight: 800; letter-spacing: 8px; color: #a5b4fc; text-align: center; margin: 16px 0; }
+    #qrcode { text-align: center; margin: 16px 0; } #qrcode img { border-radius: 12px; max-width: 220px; }
+    .question-display { font-size: 28px; text-align: center; margin: 30px 0; line-height: 1.4; } .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0; }
+    .opt { padding: 20px; border-radius: 12px; font-size: 18px; text-align: center; font-weight: 600; } .opt0 { background: #ef4444; } .opt1 { background: #3b82f6; } .opt2 { background: #eab308; color: #000; } .opt3 { background: #22c55e; }
+    .ranking { margin-top: 20px; } .rank-item { display: flex; justify-content: space-between; padding: 12px 16px; background: #0f172a; border-radius: 8px; margin-bottom: 8px; }
+    .rank-item:nth-child(1) { border: 2px solid gold; } .rank-item:nth-child(2) { border: 2px solid silver; } .rank-item:nth-child(3) { border: 2px solid #cd7f32; }
+    .podium { display: flex; align-items: end; justify-content: center; gap: 8px; height: 280px; margin: 24px auto; max-width: 620px; }
+    .podium-place { width: 31%; display: flex; flex-direction: column; align-items: center; justify-content: end; }
+    .podium-player { width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-align: center; font-weight: 800; }
+    .podium-avatar { font-size: 48px; line-height: 1; margin-bottom: 6px; filter: drop-shadow(0 5px 4px rgba(0,0,0,.25)); }
+    .podium-block { width: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-size: 25px; font-weight: 900; border-radius: 12px 12px 0 0; }
+    .podium-place.first { order: 2; } .podium-place.second { order: 1; } .podium-place.third { order: 3; }
+    .first .podium-block { height: 170px; background: linear-gradient(#facc15, #ca8a04); color: #422006; }
+    .second .podium-block { height: 120px; background: linear-gradient(#cbd5e1, #64748b); color: #0f172a; }
+    .third .podium-block { height: 85px; background: linear-gradient(#d97706, #92400e); color: #fff7ed; }
+    .card { animation: slideIn .45s ease-out both; } .btn { transition: transform .18s ease, filter .18s ease; } .btn:hover { transform: translateY(-2px); filter: brightness(1.08); }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+    .sound-toggle { position: fixed; right: 20px; top: 18px; z-index: 5; border: 1px solid #475569; background: #1e293b; color: #e2e8f0; border-radius: 999px; padding: 8px 12px; cursor: pointer; }
+    .import-box { background: #0f172a; border: 1px dashed #475569; border-radius: 10px; padding: 14px; margin-bottom: 18px; }
+    .import-box small { display: block; color: #94a3b8; margin-top: 4px; line-height: 1.5; }
+    .delete-btn { background: #7f1d1d; color: #fecaca; padding: 8px 12px; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <button class="sound-toggle" id="soundToggle" type="button">🔊 音乐播放中</button>
+  <div class="container">
+    <h1>🎯 主持人控制台</h1>
+    <div id="setup"><div class="card">
+      <label>活动标题</label><input id="quizTitle" value="趣味知识竞赛" placeholder="例如：公司年会知识竞赛">
+      <div class="import-box"><label>一键导入题目（CSV 格式）</label><input id="questionFile" type="file" accept=".csv,text/csv"><button class="btn btn-primary" type="button" onclick="importQuestions()">导入 CSV 题库</button><small>表头：题目,选项A,选项B,选项C,选项D,正确答案,答题时间。正确答案填写 A、B、C 或 D。</small></div>
+      <label>题目列表（可添加多道）</label><div id="questionsList"></div>
+      <button class="btn btn-primary" onclick="addQuestion()">+ 添加题目</button><button class="btn btn-success" onclick="createRoom()">创建房间并生成二维码</button>
+    </div></div>
+    <div id="lobby"><div class="card">
+      <h2 style="text-align:center;margin-bottom:8px;">房间码</h2><div class="big-code" id="roomCodeDisplay">------</div><div id="qrcode"></div>
+      <p style="text-align:center;color:#94a3b8;margin-bottom:16px;">让玩家用手机扫描上方二维码，或打开 <b>/play.html</b> 输入房间码加入</p>
+      <div><strong>已加入玩家：</strong><div class="players" id="playerList"></div></div>
+      <div style="margin-top:24px;text-align:center;"><button class="btn btn-success" id="startBtn" onclick="startGame()" disabled>开始第一题</button></div>
+    </div></div>
+    <div id="game"><div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><span id="qProgress">第 1 / 5 题</span><span id="timerDisplay" style="font-size:24px;font-weight:bold;color:#fbbf24;">20s</span></div>
+      <div class="question-display" id="questionText">题目内容</div><div class="options-grid" id="optionsDisplay"></div>
+      <div style="text-align:center;margin-top:20px;"><button class="btn btn-warning" onclick="revealAnswer()">揭晓答案</button><button class="btn btn-success" id="nextBtn" onclick="nextQuestion()">下一题</button></div>
+      <div class="ranking" id="liveRanking"></div>
+    </div></div>
+    <div id="finished"><div class="card"><h2 style="text-align:center;margin-bottom:20px;">🏆 最终排名</h2><div class="podium" id="finalPodium"></div><div id="finalRanking"></div><div style="text-align:center;margin-top:24px;"><button class="btn btn-primary" onclick="location.reload()">再来一局</button></div></div></div>
+  </div>
+  <script>
+    const socket = io(); let currentCode = null; let questions = []; let timerInterval = null; let autoNextTimer = null; let timeLeft = 20;
+    document.getElementById('soundToggle').onclick = () => { const muted = window.quizFx.toggleMute(); document.getElementById('soundToggle').textContent = muted ? '🔇 音乐已静音' : '🔊 音乐播放中'; };
+    document.addEventListener('click', e => { if (e.target.matches('button')) window.quizFx.click(); });
+    const questionBank = [
+      { text: '中国的首都是哪里？', options: ['上海', '北京', '广州', '深圳'], correctIndex: 1, timeLimit: 15 },
+      { text: '1 + 1 = ?', options: ['1', '2', '3', '4'], correctIndex: 1, timeLimit: 10 },
+      { text: '太阳系中最大的行星是哪一颗？', options: ['地球', '火星', '木星', '金星'], correctIndex: 2, timeLimit: 15 },
+      { text: '水的化学式是什么？', options: ['CO2', 'O2', 'H2O', 'NaCl'], correctIndex: 2, timeLimit: 15 },
+      { text: '一年有多少个月？', options: ['10', '11', '12', '13'], correctIndex: 2, timeLimit: 10 },
+      { text: '彩虹通常有几种颜色？', options: ['5', '6', '7', '8'], correctIndex: 2, timeLimit: 15 },
+      { text: '世界上面积最大的国家是？', options: ['中国', '加拿大', '俄罗斯', '美国'], correctIndex: 2, timeLimit: 15 },
+      { text: 'HTML 主要用于做什么？', options: ['网页结构', '数据库', '图片编辑', '操作系统'], correctIndex: 0, timeLimit: 15 },
+      { text: '地球唯一的天然卫星是？', options: ['太阳', '月球', '火星', '金星'], correctIndex: 1, timeLimit: 10 },
+      { text: '三角形内角和是多少度？', options: ['90', '180', '270', '360'], correctIndex: 1, timeLimit: 15 }
+    ];
+    function renderQuestions() { const list = document.getElementById('questionsList'); list.innerHTML = ''; questions.forEach((q, idx) => { const div = document.createElement('div'); div.className = 'question-item'; div.id = `q-${idx}`; div.innerHTML = `<label>题目 ${idx + 1}</label><textarea placeholder="请输入题目内容" oninput="questions[${idx}].text=this.value">${q.text}</textarea><label>选项（选中正确选项）</label>${[0,1,2,3].map(i => `<div class="option-row"><input type="radio" name="correct-${idx}" ${q.correctIndex===i?'checked':''} onchange="questions[${idx}].correctIndex=${i}"><input type="text" placeholder="选项 ${String.fromCharCode(65+i)}" value="${q.options[i]||''}" oninput="questions[${idx}].options[${i}]=this.value"></div>`).join('')}<label>答题时间（秒）</label><input type="number" value="${q.timeLimit || 20}" min="5" max="60" oninput="questions[${idx}].timeLimit=parseInt(this.value)||20"><button class="btn delete-btn" type="button" onclick="removeQuestion(${idx})">删除这道题</button>`; list.appendChild(div); }); }
+    function addQuestion(data = null) { questions.push(data || { text: '', options: ['', '', '', ''], correctIndex: 0, timeLimit: 20 }); renderQuestions(); }
+    function removeQuestion(index) { if (questions.length <= 1) return alert('至少保留一道题目'); questions.splice(index, 1); renderQuestions(); }
+    async function importQuestions() { const file = document.getElementById('questionFile').files[0]; if (!file) return alert('请先选择 CSV 题库文件'); const form = new FormData(); form.append('file', file); try { const response = await fetch('/api/import-questions', { method: 'POST', body: form }); const data = await response.json(); if (!response.ok) throw new Error(data.error || '导入失败'); questions = data.questions; renderQuestions(); alert(`成功导入 ${questions.length} 道题`); } catch (error) { alert(`导入失败：${error.message}`); } }
+    questions = [...questionBank].sort(() => Math.random() - 0.5).slice(0, 5); renderQuestions();
+    async function createRoom() { window.quizFx.start(); const valid = questions.filter(q => q.text.trim() && q.options.some(o => o.trim())); if (!valid.length) return alert('请至少填写一道完整的题目'); const res = await fetch('/api/create-room', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quizTitle: document.getElementById('quizTitle').value, questions: valid }) }); const data = await res.json(); if (data.error) return alert(data.error); currentCode = data.code; document.getElementById('roomCodeDisplay').textContent = data.code; if (data.qrDataUrl) document.getElementById('qrcode').innerHTML = `<img src="${data.qrDataUrl}" alt="二维码">`; document.getElementById('setup').style.display = 'none'; document.getElementById('lobby').style.display = 'block'; socket.emit('host-join', { code: data.code }); }
+    socket.on('host-joined', data => console.log('主持人已加入房间', data)); socket.on('player-list', list => { document.getElementById('playerList').innerHTML = list.map(p => `<div class="player-chip">${p.avatar || '😀'} ${p.nickname}</div>`).join('') || '<span style="color:#64748b">还没有人加入...</span>'; document.getElementById('startBtn').disabled = !list.length; });
+    socket.on('game-phase', data => window.quizFx.setPhase(data.phase, data.startedAt));
+    function startGame() { window.quizFx.start(); socket.emit('start-game', { code: currentCode }); document.getElementById('lobby').style.display = 'none'; document.getElementById('game').style.display = 'block'; autoNextTimer = setTimeout(nextQuestion, 2500); } function nextQuestion() { if (timerInterval) clearInterval(timerInterval); if (autoNextTimer) clearTimeout(autoNextTimer); socket.emit('next-question', { code: currentCode }); }
+    socket.on('question-host', q => { document.getElementById('qProgress').textContent = `第 ${q.index + 1} / ${q.total} 题`; document.getElementById('questionText').textContent = q.text; document.getElementById('optionsDisplay').innerHTML = q.options.map((opt, i) => `<div class="opt opt${i}">${String.fromCharCode(65+i)}. ${opt}</div>`).join(''); const isLastQuestion = q.index === q.total - 1; document.getElementById('nextBtn').disabled = isLastQuestion; document.getElementById('nextBtn').textContent = isLastQuestion ? '等待揭晓' : '下一题'; const endAt = q.startedAt + 15000; const updateTimer = () => { timeLeft = Math.max(0, Math.ceil((endAt - Date.now()) / 1000)); document.getElementById('timerDisplay').textContent = timeLeft > 0 ? timeLeft + 's' : (isLastQuestion ? '等待揭晓' : '0s'); if (timeLeft <= 0) { clearInterval(timerInterval); if (!isLastQuestion) autoNextTimer = setTimeout(nextQuestion, 1200); } }; if (timerInterval) clearInterval(timerInterval); updateTimer(); timerInterval = setInterval(updateTimer, 100); });
+    function revealAnswer() { if (timerInterval) clearInterval(timerInterval); socket.emit('reveal-answer', { code: currentCode }); }
+    socket.on('reveal', data => { document.querySelectorAll('.opt').forEach((el, i) => { if (i === data.correctIndex) { el.style.outline = '4px solid #fff'; el.style.transform = 'scale(1.05)'; } else el.style.opacity = '0.5'; }); document.getElementById('liveRanking').innerHTML = '<h3 style="margin-bottom:12px;">当前排名</h3>' + data.ranking.map((p, i) => `<div class="rank-item"><span>#${i+1} ${p.nickname}</span><span>${p.score} 分</span></div>`).join(''); });
+    socket.on('score-update', ranking => {}); socket.on('game-over', data => { document.getElementById('game').style.display = 'none'; document.getElementById('finished').style.display = 'block'; renderPodium(data.ranking); document.getElementById('finalRanking').innerHTML = data.ranking.slice(3).map(p => `<div class="rank-item"><span>${p.avatar || '😀'} #${p.rank} ${p.nickname}</span><span>${p.score} 分</span></div>`).join('') || '<p style="text-align:center;color:#94a3b8">没有第四名以后的参与者</p>'; });
+    function renderPodium(ranking) { const podium = document.getElementById('finalPodium'); const places = [{ rank: 2, cls: 'second', label: '🥈' }, { rank: 1, cls: 'first', label: '🥇' }, { rank: 3, cls: 'third', label: '🥉' }]; podium.innerHTML = places.map(place => { const player = ranking[place.rank - 1]; if (!player) return ''; return `<div class="podium-place ${place.cls}"><div class="podium-avatar">${player.avatar || '😀'}</div><div class="podium-player">${player.nickname}</div><div class="podium-block"><div>${place.label}</div><small>${player.score} 分</small></div></div>`; }).join(''); }
+  </script>
+</body>
+</html>

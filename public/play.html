@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>玩家加入 - 多人答题</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/effects.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+    .card { background: #1e293b; border-radius: 20px; padding: 28px; width: 100%; max-width: 400px; text-align: center; }
+    h1 { font-size: 22px; margin-bottom: 20px; }
+    input { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid #334155; background: #0f172a; color: #e2e8f0; font-size: 18px; margin-bottom: 16px; text-align: center; letter-spacing: 2px; }
+    .btn { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 18px; font-weight: 700; cursor: pointer; background: #6366f1; color: white; }
+    .btn:active { transform: scale(0.98); } .btn:disabled { opacity: 0.5; }
+    #joinScreen, #waitScreen, #questionScreen, #resultScreen, #gameOverScreen { display: none; } #joinScreen { display: block; }
+    .nickname { font-size: 20px; color: #a5b4fc; margin-bottom: 8px; } .score { font-size: 32px; font-weight: 800; color: #fbbf24; margin: 12px 0; }
+    .question-text { font-size: 22px; line-height: 1.4; margin: 20px 0; padding: 0 8px; }
+    .options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+    .option-btn { padding: 22px 12px; border: none; border-radius: 14px; font-size: 16px; font-weight: 600; color: white; cursor: pointer; min-height: 80px; display: flex; align-items: center; justify-content: center; text-align: center; }
+    .option-btn:active { transform: scale(0.96); } .option-btn:disabled { opacity: 0.7; cursor: default; }
+    .opt0 { background: #ef4444; } .opt1 { background: #3b82f6; } .opt2 { background: #eab308; color: #111; } .opt3 { background: #22c55e; } .correct { outline: 4px solid #fff; } .wrong { opacity: 0.4; }
+    .timer { font-size: 28px; font-weight: bold; color: #fbbf24; margin-bottom: 8px; } .result-icon { font-size: 64px; margin: 16px 0; }
+    .rank-list { text-align: left; margin-top: 16px; } .rank-item { display: flex; justify-content: space-between; padding: 12px; background: #0f172a; border-radius: 10px; margin-bottom: 8px; }
+    .avatar-picker { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin: 4px 0 16px; }
+    .avatar-choice { border: 2px solid transparent; background: #0f172a; border-radius: 12px; padding: 8px; font-size: 26px; cursor: pointer; }
+    .avatar-choice.selected { border-color: #a5b4fc; background: #3730a3; transform: scale(1.08); }
+    .podium { display: flex; align-items: end; justify-content: center; gap: 8px; height: 260px; margin-top: 24px; }
+    .podium-place { width: 31%; display: flex; flex-direction: column; align-items: center; justify-content: end; }
+    .podium-player { width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 800; }
+    .podium-avatar { font-size: 42px; line-height: 1; margin-bottom: 6px; filter: drop-shadow(0 5px 4px rgba(0,0,0,.25)); }
+    .podium-block { width: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-size: 24px; font-weight: 900; border-radius: 12px 12px 0 0; }
+    .podium-place.first { order: 2; } .podium-place.second { order: 1; } .podium-place.third { order: 3; }
+    .first .podium-block { height: 150px; background: linear-gradient(#facc15, #ca8a04); color: #422006; }
+    .second .podium-block { height: 105px; background: linear-gradient(#cbd5e1, #64748b); color: #0f172a; }
+    .third .podium-block { height: 75px; background: linear-gradient(#d97706, #92400e); color: #fff7ed; }
+    .card { animation: popIn .45s ease-out both; } .option-btn { transition: transform .16s ease, filter .16s ease; } .option-btn:hover { transform: translateY(-3px); filter: brightness(1.1); }
+    @keyframes popIn { from { opacity: 0; transform: scale(.96) translateY(12px); } to { opacity: 1; transform: none; } }
+    .sound-toggle { position: fixed; right: 16px; top: 16px; border: 1px solid #475569; background: #1e293b; color: #e2e8f0; border-radius: 999px; padding: 8px 12px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <button class="sound-toggle" id="soundToggle" type="button">🔊 音乐播放中</button>
+  <div class="card" id="joinScreen"><h1>🎮 加入游戏</h1><input id="codeInput" placeholder="输入6位房间码" maxlength="6" style="text-transform:uppercase"><input id="nicknameInput" placeholder="你的昵称" maxlength="12"><div style="text-align:left;color:#94a3b8;margin-bottom:8px;">选择你的头像</div><div class="avatar-picker" id="avatarPicker"></div><button class="btn" onclick="joinGame()">加入</button></div>
+  <div class="card" id="waitScreen"><div class="nickname" id="myNickname"></div><p style="color:#94a3b8;margin:16px 0;">已成功加入房间</p><div style="font-size:36px;letter-spacing:6px;color:#a5b4fc;margin:12px 0;" id="showCode"></div><p style="color:#64748b;">等待主持人开始...</p></div>
+  <div class="card" id="questionScreen"><div class="timer" id="timer">20s</div><div style="color:#94a3b8;font-size:14px;" id="qInfo">第 1 题</div><div class="question-text" id="qText"></div><div class="options" id="options"></div></div>
+  <div class="card" id="resultScreen"><div class="result-icon" id="resultIcon">✓</div><div id="resultText" style="font-size:22px;margin-bottom:8px;"></div><div class="score" id="gotPoints">+0</div><div style="color:#94a3b8;">当前总分</div><div class="score" id="totalScore">0</div></div>
+  <div class="card" id="gameOverScreen"><h1>🏆 最终排名</h1><div class="score" id="finalMyScore">0</div><div class="podium" id="finalPodium"></div><div class="rank-list" id="finalRank"></div></div>
+  <script>
+    const socket = io(); let myPlayerId = null; let myScore = 0; let timerInterval = null; let answered = false; let selectedAvatar = '😀';
+    const avatarOptions = ['😀', '😎', '🤩', '🥳', '🦊', '🐼', '🐸', '🦄', '🐯', '🐨', '🚀', '🌟'];
+    document.getElementById('avatarPicker').innerHTML = avatarOptions.map((avatar, i) => `<button type="button" class="avatar-choice ${i === 0 ? 'selected' : ''}" data-avatar="${avatar}">${avatar}</button>`).join('');
+    document.querySelectorAll('.avatar-choice').forEach(button => button.onclick = () => { selectedAvatar = button.dataset.avatar; document.querySelectorAll('.avatar-choice').forEach(item => item.classList.toggle('selected', item === button)); window.quizFx.click(); });
+    document.getElementById('soundToggle').onclick = () => { const muted = window.quizFx.toggleMute(); document.getElementById('soundToggle').textContent = muted ? '🔇 音乐已静音' : '🔊 音乐播放中'; };
+    const urlParams = new URLSearchParams(location.search); if (urlParams.get('code')) document.getElementById('codeInput').value = urlParams.get('code').toUpperCase();
+    function joinGame() { const code = document.getElementById('codeInput').value.trim().toUpperCase(); const nickname = document.getElementById('nicknameInput').value.trim(); if (!code || code.length < 4) return alert('请输入正确的房间码'); window.quizFx.start(); socket.emit('player-join', { code, nickname, avatar: selectedAvatar }); }
+    socket.on('joined', data => { myPlayerId = data.playerId; document.getElementById('joinScreen').style.display = 'none'; document.getElementById('waitScreen').style.display = 'block'; document.getElementById('myNickname').textContent = data.nickname; document.getElementById('showCode').textContent = data.code; });
+    socket.on('game-phase', data => window.quizFx.setPhase(data.phase, data.startedAt));
+    socket.on('question', q => { answered = false; document.getElementById('waitScreen').style.display = 'none'; document.getElementById('resultScreen').style.display = 'none'; document.getElementById('questionScreen').style.display = 'block'; document.getElementById('qInfo').textContent = `第 ${q.index + 1} / ${q.total} 题`; document.getElementById('qText').textContent = q.text; document.getElementById('options').innerHTML = q.options.map((opt, i) => `<button class="option-btn opt${i}" onclick="submitAnswer(${i})" id="opt${i}">${opt}</button>`).join(''); const endAt = q.startedAt + 15000; const updateTimer = () => { const remaining = Math.max(0, Math.ceil((endAt - Date.now()) / 1000)); document.getElementById('timer').textContent = remaining + 's'; if (remaining <= 0) { clearInterval(timerInterval); document.querySelectorAll('.option-btn').forEach(b => b.disabled = true); } }; if (timerInterval) clearInterval(timerInterval); updateTimer(); timerInterval = setInterval(updateTimer, 100); });
+    function submitAnswer(index) { if (answered) return; answered = true; document.querySelectorAll('.option-btn').forEach(b => b.disabled = true); document.getElementById('opt' + index).style.outline = '3px solid white'; socket.emit('submit-answer', { answerIndex: index }); }
+    socket.on('answer-result', data => { myScore = data.yourScore; });
+    socket.on('reveal', data => { document.querySelectorAll('.option-btn').forEach((btn, i) => { if (i === data.correctIndex) btn.classList.add('correct'); else btn.classList.add('wrong'); }); });
+    socket.on('game-over', data => { document.getElementById('questionScreen').style.display = 'none'; document.getElementById('resultScreen').style.display = 'none'; document.getElementById('waitScreen').style.display = 'none'; document.getElementById('gameOverScreen').style.display = 'block'; document.getElementById('finalMyScore').textContent = myScore + ' 分'; renderPodium(data.ranking); document.getElementById('finalRank').innerHTML = data.ranking.slice(3).map(p => `<div class="rank-item"><span>${p.avatar || '😀'} #${p.rank} ${p.nickname}</span><span>${p.score} 分</span></div>`).join('') || '<p style="text-align:center;color:#94a3b8">没有第四名以后的参与者</p>'; });
+    function renderPodium(ranking) { const podium = document.getElementById('finalPodium'); const places = [{ rank: 2, cls: 'second', label: '🥈' }, { rank: 1, cls: 'first', label: '🥇' }, { rank: 3, cls: 'third', label: '🥉' }]; podium.innerHTML = places.map(place => { const player = ranking[place.rank - 1]; if (!player) return ''; return `<div class="podium-place ${place.cls}"><div class="podium-avatar">${player.avatar || '😀'}</div><div class="podium-player">${player.nickname}</div><div class="podium-block"><div>${place.label}</div><small>${player.score} 分</small></div></div>`; }).join(''); }
+    socket.on('error', e => alert(e.message));
+  </script>
+</body>
+</html>
