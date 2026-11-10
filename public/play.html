@@ -45,11 +45,12 @@
     .answer-status.correct-status { display: block; color: #4ade80; }
     .answer-status.wrong-status { display: block; color: #f87171; }
     .answer-status.empty-status { display: block; color: #fbbf24; }
-    .back-home { display:inline-flex; margin-bottom:18px; color:#c7d2fe; text-decoration:none; border:1px solid rgba(129,140,248,.45); border-radius:999px; padding:8px 14px; background:rgba(15,23,75,.72); }
-    .top-controls { position:fixed; right:16px; top:16px; z-index:5; display:flex; gap:8px; align-items:center; }
-    .top-controls .sound-toggle, .top-controls .language-toggle { position:static; }
+    .back-home { display:inline-flex; margin-bottom:0; color:#c7d2fe; text-decoration:none; border:1px solid rgba(129,140,248,.45); border-radius:999px; padding:8px 14px; background:rgba(15,23,75,.72); }
+    .page-topbar { position:fixed; inset:16px 16px auto; z-index:5; display:flex; justify-content:space-between; align-items:center; gap:12px; }
+    .page-topbar-left, .page-topbar-right { display:flex; gap:8px; align-items:center; }
+    .page-topbar .sound-toggle, .page-topbar .language-toggle { position:static; }
     .language-toggle { border:1px solid #475569; background:#1e293b; color:#e2e8f0; border-radius:999px; padding:8px 12px; cursor:pointer; }
-    .join-logo { display:block; width:min(190px, 70%); max-height:90px; object-fit:contain; margin:0 auto 14px; }
+    .join-logo { display:block; width:min(380px, 92%); max-height:180px; object-fit:contain; margin:0 auto 14px; }
     .avatar-select-row { display:flex; align-items:center; gap:10px; margin:4px 0 16px; }
     .avatar-preview { width:54px; height:54px; display:grid; place-items:center; border-radius:16px; font-size:32px; background:rgba(7,11,44,.9); border:1px solid rgba(129,140,248,.55); }
     .avatar-select { flex:1; margin:0; text-align:left; letter-spacing:0; }
@@ -86,7 +87,7 @@
   </style>
 </head>
 <body>
-  <div class="top-controls"><a class="back-home" href="/" data-i18n="backHome">← 返回首页</a><button class="sound-toggle" id="soundToggle" type="button" data-i18n="musicOn">🔊 音乐开启</button><button class="language-toggle" data-language-toggle type="button" onclick="window.quizI18n.toggle()">🌐 EN</button></div>
+  <div class="page-topbar"><div class="page-topbar-left"><a class="back-home" href="/" data-i18n="backHome">← 返回首页</a></div><div class="page-topbar-right"><button class="sound-toggle" id="soundToggle" type="button" data-i18n="musicOn">🔊 音乐开启</button><button class="language-toggle" data-language-toggle type="button" onclick="window.quizI18n.toggle()">🌐 EN</button></div></div>
   <div class="card" id="joinScreen"><img class="join-logo" src="/assets/橙色趣味LOGO.png" alt="Live Quiz Logo"><h1 data-i18n="join">🎮 加入游戏</h1><input id="codeInput" data-i18n-placeholder="roomCode" placeholder="输入6位房间码" maxlength="6" style="text-transform:uppercase"><input id="nicknameInput" data-i18n-placeholder="nickname" placeholder="你的昵称" maxlength="12"><div style="text-align:left;color:#94a3b8;margin-bottom:8px;" data-i18n="chooseAvatar">选择你的头像</div><div class="avatar-select-row"><div class="avatar-preview" id="avatarPreview">😀</div><select class="avatar-select" id="avatarPicker" aria-label="Avatar"></select></div><button class="btn" onclick="joinGame()" data-i18n="joinButton">加入</button></div>
   <div class="card" id="waitScreen"><div class="nickname" id="myNickname"></div><p style="color:#94a3b8;margin:16px 0;">已成功加入房间</p><div style="font-size:36px;letter-spacing:6px;color:#a5b4fc;margin:12px 0;" id="showCode"></div><p style="color:#64748b;">等待主持人开始...</p></div>
   <div class="card" id="questionScreen"><div class="timer" id="timer">20s</div><div style="color:#94a3b8;font-size:14px;" id="qInfo">第 1 题</div><div class="question-text" id="qText"></div><div class="options" id="options"></div><div class="waiting-reveal" id="waitingReveal">等待揭晓答案……</div><div class="answer-status" id="answerStatus"></div><div class="round-ranking" id="roundRanking"><div class="round-ranking-title">本题当前排名</div><div id="roundRankingList"></div></div></div>

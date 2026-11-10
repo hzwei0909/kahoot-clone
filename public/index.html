@@ -67,15 +67,15 @@
     .sound { border-color: rgba(129,140,248,.6); background: rgba(15,23,75,.8); color: #dbeafe; }
     .footer { color: #818bb8; }
     .language-toggle { position: fixed; top: 18px; right: 18px; border: 1px solid rgba(129,140,248,.6); border-radius: 999px; padding: 8px 12px; color: #dbeafe; background: rgba(15,23,75,.8); cursor: pointer; z-index: 3; }
-    .brand-logo { display:block; width:min(240px, 72%); max-height:120px; object-fit:contain; margin:0 auto 18px; }
+    .brand-logo { display:block; width:min(480px, 94%); max-height:240px; object-fit:contain; margin:0 auto 16px; }
+    .tagline { font-size:14px; line-height:1.7; color:#b9c2f4; margin:0 auto 26px; max-width:440px; }
   </style>
 </head>
 <body>
   <button class="language-toggle" data-language-toggle type="button" onclick="window.quizI18n.toggle()">🌐 EN</button>
   <div class="card">
     <img class="brand-logo" src="/assets/橙色趣味LOGO.png" alt="Live Quiz Logo">
-    <h1 data-i18n="homeTitle">多人实时答题</h1>
-    <p data-i18n="homeSubtitle">类似 Kahoot 的实时抢分游戏<br>支持扫码加入 · 速度加分 · 实时排行</p>
+    <p class="tagline" data-i18n="tagline">Huat ah! 让答题变成一场刺激的抢分挑战！扫码即玩，拼知识、拼速度、拼反应，看看谁才是真正的答题之王！</p>
     
     <a href="/host.html"><button class="btn btn-host" data-i18n="host">我是主持人（出题开房）</button></a>
     <a href="/play.html"><button class="btn btn-play" data-i18n="player">我是玩家（加入游戏）</button></a>
