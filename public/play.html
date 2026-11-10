@@ -2,13 +2,13 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>玩家加入 - 多人答题</title>
   <script src="/socket.io/socket.io.js"></script>
   <script src="/effects.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 92px 20px 28px; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: calc(112px + env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) calc(28px + env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left)); overflow-x: hidden; }
     .card { background: #1e293b; border-radius: 20px; padding: 28px; width: 100%; max-width: 400px; text-align: center; }
     h1 { font-size: 22px; margin-bottom: 20px; }
     input { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid #334155; background: #0f172a; color: #e2e8f0; font-size: 18px; margin-bottom: 16px; text-align: center; letter-spacing: 2px; }
@@ -47,7 +47,7 @@
     .answer-status.wrong-status { display: block; color: #f87171; }
     .answer-status.empty-status { display: block; color: #fbbf24; }
     .back-home { display:inline-flex; margin-bottom:0; color:#c7d2fe; text-decoration:none; border:1px solid rgba(129,140,248,.45); border-radius:999px; padding:8px 14px; background:rgba(15,23,75,.72); }
-    .page-topbar { position:absolute; inset:16px 16px auto; z-index:5; display:flex; justify-content:space-between; align-items:center; gap:12px; }
+    .page-topbar { position:absolute; top:calc(16px + env(safe-area-inset-top)); left:max(16px, env(safe-area-inset-left)); right:max(16px, env(safe-area-inset-right)); z-index:5; display:flex; justify-content:space-between; align-items:center; gap:12px; }
     .page-topbar-left, .page-topbar-right { display:flex; gap:8px; align-items:center; }
     .page-topbar .sound-toggle, .page-topbar .language-toggle { position:static; }
     .language-toggle { border:1px solid #475569; background:#1e293b; color:#e2e8f0; border-radius:999px; padding:8px 12px; cursor:pointer; }
@@ -86,6 +86,24 @@
     .waiting-reveal { color: #67e8f9; }
     .answer-status.correct-status { color: #4ade80; text-shadow: 0 0 14px rgba(74,222,128,.4); }
     .answer-status.wrong-status { color: #fb7185; text-shadow: 0 0 14px rgba(251,113,133,.35); }
+    @media (max-width: 600px) {
+      body {
+        padding-top: calc(124px + env(safe-area-inset-top));
+        padding-left: max(14px, env(safe-area-inset-left));
+        padding-right: max(14px, env(safe-area-inset-right));
+      }
+      .page-topbar {
+        top: calc(12px + env(safe-area-inset-top));
+        left: max(12px, env(safe-area-inset-left));
+        right: max(12px, env(safe-area-inset-right));
+      }
+      .page-topbar .back-home,
+      .page-topbar .sound-toggle,
+      .page-topbar .language-toggle {
+        padding: 7px 9px;
+        font-size: 13px;
+      }
+    }
   </style>
 </head>
 <body>
