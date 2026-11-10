@@ -318,6 +318,7 @@ io.on('connection', (socket) => {
     io.to(roomCode).emit('answer-progress', {
       nickname: player?.nickname || '玩家',
       avatar: player?.avatar || avatars[0],
+      score: player?.score || 0,
       answerIndex,
       optionStats,
       answeredCount: answersMap.size
