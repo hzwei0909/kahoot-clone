@@ -46,6 +46,13 @@
     .answer-status.wrong-status { display: block; color: #f87171; }
     .answer-status.empty-status { display: block; color: #fbbf24; }
     .back-home { display:inline-flex; margin-bottom:18px; color:#c7d2fe; text-decoration:none; border:1px solid rgba(129,140,248,.45); border-radius:999px; padding:8px 14px; background:rgba(15,23,75,.72); }
+    .top-controls { position:fixed; right:16px; top:16px; z-index:5; display:flex; gap:8px; align-items:center; }
+    .top-controls .sound-toggle, .top-controls .language-toggle { position:static; }
+    .language-toggle { border:1px solid #475569; background:#1e293b; color:#e2e8f0; border-radius:999px; padding:8px 12px; cursor:pointer; }
+    .join-logo { display:block; width:min(190px, 70%); max-height:90px; object-fit:contain; margin:0 auto 14px; }
+    .avatar-select-row { display:flex; align-items:center; gap:10px; margin:4px 0 16px; }
+    .avatar-preview { width:54px; height:54px; display:grid; place-items:center; border-radius:16px; font-size:32px; background:rgba(7,11,44,.9); border:1px solid rgba(129,140,248,.55); }
+    .avatar-select { flex:1; margin:0; text-align:left; letter-spacing:0; }
     .round-ranking { display:none; margin-top:20px; text-align:left; border-top:1px solid rgba(129,140,248,.25); padding-top:16px; }
     .round-ranking.visible { display:block; }
     .round-ranking-title { color:#67e8f9; font-weight:900; text-align:center; margin-bottom:10px; }
@@ -79,18 +86,18 @@
   </style>
 </head>
 <body>
-    <button class="sound-toggle" id="soundToggle" type="button">🔊 音乐开启</button>
-  <div class="card" id="joinScreen"><a class="back-home" href="/">← 返回首页</a><h1>🎮 加入游戏</h1><input id="codeInput" placeholder="输入6位房间码" maxlength="6" style="text-transform:uppercase"><input id="nicknameInput" placeholder="你的昵称" maxlength="12"><div style="text-align:left;color:#94a3b8;margin-bottom:8px;">选择你的头像</div><div class="avatar-picker" id="avatarPicker"></div><button class="btn" onclick="joinGame()">加入</button></div>
+  <div class="top-controls"><a class="back-home" href="/" data-i18n="backHome">← 返回首页</a><button class="sound-toggle" id="soundToggle" type="button" data-i18n="musicOn">🔊 音乐开启</button><button class="language-toggle" data-language-toggle type="button" onclick="window.quizI18n.toggle()">🌐 EN</button></div>
+  <div class="card" id="joinScreen"><img class="join-logo" src="/assets/橙色趣味LOGO.png" alt="Live Quiz Logo"><h1 data-i18n="join">🎮 加入游戏</h1><input id="codeInput" data-i18n-placeholder="roomCode" placeholder="输入6位房间码" maxlength="6" style="text-transform:uppercase"><input id="nicknameInput" data-i18n-placeholder="nickname" placeholder="你的昵称" maxlength="12"><div style="text-align:left;color:#94a3b8;margin-bottom:8px;" data-i18n="chooseAvatar">选择你的头像</div><div class="avatar-select-row"><div class="avatar-preview" id="avatarPreview">😀</div><select class="avatar-select" id="avatarPicker" aria-label="Avatar"></select></div><button class="btn" onclick="joinGame()" data-i18n="joinButton">加入</button></div>
   <div class="card" id="waitScreen"><div class="nickname" id="myNickname"></div><p style="color:#94a3b8;margin:16px 0;">已成功加入房间</p><div style="font-size:36px;letter-spacing:6px;color:#a5b4fc;margin:12px 0;" id="showCode"></div><p style="color:#64748b;">等待主持人开始...</p></div>
   <div class="card" id="questionScreen"><div class="timer" id="timer">20s</div><div style="color:#94a3b8;font-size:14px;" id="qInfo">第 1 题</div><div class="question-text" id="qText"></div><div class="options" id="options"></div><div class="waiting-reveal" id="waitingReveal">等待揭晓答案……</div><div class="answer-status" id="answerStatus"></div><div class="round-ranking" id="roundRanking"><div class="round-ranking-title">本题当前排名</div><div id="roundRankingList"></div></div></div>
   <div class="card" id="resultScreen"><div class="result-icon" id="resultIcon">✓</div><div id="resultText" style="font-size:22px;margin-bottom:8px;"></div><div class="score" id="gotPoints">+0</div><div style="color:#94a3b8;">当前总分</div><div class="score" id="totalScore">0</div></div>
   <div class="card" id="gameOverScreen"><h1>🏆 最终排名</h1><div class="final-summary"><div class="final-summary-label">我的最终成绩</div><div class="score" id="finalMyScore">0 分</div><div id="finalMyRank" style="color:#67e8f9;font-weight:900;">—</div></div><div class="podium" id="finalPodium"></div><div class="final-rank-list" id="finalRank"></div></div>
-  <script>
+  <script src="/i18n.js"></script><script>
     const socket = io(); let myPlayerId = null; let myScore = 0; let myNickname = ''; let timerInterval = null; let answered = false; let selectedAvatar = '😀'; let selectedAnswerIndex = null;
-    const avatarOptions = ['😀', '😎', '🤩', '🥳', '🦊', '🐼', '🐸', '🦄', '🐯', '🐨', '🚀', '🌟'];
-    document.getElementById('avatarPicker').innerHTML = avatarOptions.map((avatar, i) => `<button type="button" class="avatar-choice ${i === 0 ? 'selected' : ''}" data-avatar="${avatar}">${avatar}</button>`).join('');
-    document.querySelectorAll('.avatar-choice').forEach(button => button.onclick = () => { selectedAvatar = button.dataset.avatar; document.querySelectorAll('.avatar-choice').forEach(item => item.classList.toggle('selected', item === button)); window.quizFx.click(); });
-    document.getElementById('soundToggle').onclick = () => { const muted = window.quizFx.toggleMute(); document.getElementById('soundToggle').textContent = muted ? '🔇 音乐静音' : '🔊 音乐开启'; };
+    const avatarOptions = [['😀','Smile'],['😎','Cool'],['🤩','Star'],['🥳','Party'],['🦊','Fox'],['🐼','Panda'],['🐸','Frog'],['🦄','Unicorn'],['🐯','Tiger'],['🐨','Koala'],['🚀','Rocket'],['🌟','Star'],['🧙‍♂️','Wizard'],['🧙‍♀️','Witch'],['👮','Police'],['👩‍⚕️','Doctor'],['👷','Worker'],['👸','Queen'],['🥷','Ninja'],['🧑‍🚀','Astronaut'],['🧑‍🍳','Chef'],['🧑‍🔬','Scientist'],['🦸‍♂️','Superhero'],['🦸‍♀️','Superhero'],['🧝‍♂️','Elf'],['🧝‍♀️','Elf'],['🧛‍♂️','Vampire'],['🧛‍♀️','Vampire'],['🧜‍♀️','Mermaid'],['🧚‍♀️','Fairy'],['👨‍🎓','Student'],['👩‍🎓','Student']];
+    document.getElementById('avatarPicker').innerHTML = avatarOptions.map(([avatar, label]) => `<option value="${avatar}">${avatar} ${label}</option>`).join('');
+    document.getElementById('avatarPicker').onchange = event => { selectedAvatar = event.target.value; document.getElementById('avatarPreview').textContent = selectedAvatar; window.quizFx.click(); };
+    document.getElementById('soundToggle').onclick = () => { const muted = window.quizFx.toggleMute(); const zh = window.quizI18n.getLanguage() === 'zh'; document.getElementById('soundToggle').textContent = muted ? (zh ? '🔇 音乐静音' : '🔇 Music Muted') : (zh ? '🔊 音乐开启' : '🔊 Music On'); };
     const urlParams = new URLSearchParams(location.search); if (urlParams.get('code')) document.getElementById('codeInput').value = urlParams.get('code').toUpperCase();
     function joinGame() { const code = document.getElementById('codeInput').value.trim().toUpperCase(); const nickname = document.getElementById('nicknameInput').value.trim(); if (!code || code.length < 4) return alert('请输入正确的房间码'); window.quizFx.start(); socket.emit('player-join', { code, nickname, avatar: selectedAvatar }); }
     socket.on('joined', data => { myPlayerId = data.playerId; myNickname = data.nickname; document.getElementById('joinScreen').style.display = 'none'; document.getElementById('waitScreen').style.display = 'block'; document.getElementById('myNickname').textContent = data.nickname; document.getElementById('showCode').textContent = data.code; });

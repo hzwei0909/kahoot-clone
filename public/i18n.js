@@ -1,0 +1,28 @@
+(() => {
+  const dict = {
+    zh: {
+      homeTitle: '多人实时答题', homeSubtitle: '类似 Kahoot 的实时抢分游戏<br>支持扫码加入 · 速度加分 · 实时排行', host: '我是主持人（出题开房）', player: '我是玩家（加入游戏）', musicOn: '🔊 音乐开启', musicOff: '🔇 音乐静音', footer: '本地运行 · 局域网多人可用<br>部署到公网后即可真正在线多人玩',
+      backHome: '← 返回首页', join: '🎮 加入游戏', joinButton: '加入', roomCode: '输入6位房间码', nickname: '你的昵称', chooseAvatar: '选择你的头像',
+      hostConsole: '🎯 主持人控制台', activityTitle: '活动标题', importTitle: '一键导入题目（CSV 格式）', importButton: '导入 CSV 题库', addQuestion: '+ 添加题目', createRoom: '创建房间并生成二维码', roomCodeTitle: '房间码', startFirst: '开始第一题', backPrevious: '← 返回上一步', online: '人在线',
+      language: 'EN'
+    },
+    en: {
+      homeTitle: 'Live Quiz Arena', homeSubtitle: 'A Kahoot-style live scoring game<br>Scan to join · Speed bonuses · Live leaderboard', host: 'I’m the Host (Create Game)', player: 'I’m a Player (Join Game)', musicOn: '🔊 Music On', musicOff: '🔇 Music Muted', footer: 'Run locally · Works for multiplayer on the same network<br>Deploy publicly for online multiplayer',
+      backHome: '← Home', join: '🎮 Join Game', joinButton: 'Join', roomCode: 'Enter 6-digit room code', nickname: 'Your nickname', chooseAvatar: 'Choose your avatar',
+      hostConsole: '🎯 Host Console', activityTitle: 'Quiz title', importTitle: 'Import questions (CSV)', importButton: 'Import CSV', addQuestion: '+ Add question', createRoom: 'Create room & QR code', roomCodeTitle: 'Room code', startFirst: 'Start first question', backPrevious: '← Previous step', online: 'online',
+      language: '中文'
+    }
+  };
+  let lang = localStorage.getItem('quiz-language') || 'zh';
+  function apply() {
+    const t = dict[lang];
+    document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+    document.querySelectorAll('[data-i18n]').forEach(el => { el.innerHTML = t[el.dataset.i18n] ?? el.innerHTML; });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => { el.placeholder = t[el.dataset.i18nPlaceholder] ?? el.placeholder; });
+    document.querySelectorAll('[data-i18n-title]').forEach(el => { el.title = t[el.dataset.i18nTitle] ?? el.title; });
+    document.querySelectorAll('[data-language-toggle]').forEach(el => { el.textContent = `🌐 ${t.language}`; });
+  }
+  function toggle() { lang = lang === 'zh' ? 'en' : 'zh'; localStorage.setItem('quiz-language', lang); apply(); }
+  window.quizI18n = { toggle, apply, getLanguage: () => lang };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply); else apply();
+})();

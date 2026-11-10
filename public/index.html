@@ -66,23 +66,26 @@
     .btn-play { background: linear-gradient(135deg, #06b6d4, #0ea5e9); }
     .sound { border-color: rgba(129,140,248,.6); background: rgba(15,23,75,.8); color: #dbeafe; }
     .footer { color: #818bb8; }
+    .language-toggle { position: fixed; top: 18px; right: 18px; border: 1px solid rgba(129,140,248,.6); border-radius: 999px; padding: 8px 12px; color: #dbeafe; background: rgba(15,23,75,.8); cursor: pointer; z-index: 3; }
+    .brand-logo { display:block; width:min(240px, 72%); max-height:120px; object-fit:contain; margin:0 auto 18px; }
   </style>
 </head>
 <body>
+  <button class="language-toggle" data-language-toggle type="button" onclick="window.quizI18n.toggle()">🌐 EN</button>
   <div class="card">
-    <h1>🎯 多人实时答题</h1>
-    <p>类似 Kahoot 的实时抢分游戏<br>支持扫码加入 · 速度加分 · 实时排行</p>
+    <img class="brand-logo" src="/assets/橙色趣味LOGO.png" alt="Live Quiz Logo">
+    <h1 data-i18n="homeTitle">多人实时答题</h1>
+    <p data-i18n="homeSubtitle">类似 Kahoot 的实时抢分游戏<br>支持扫码加入 · 速度加分 · 实时排行</p>
     
-    <a href="/host.html"><button class="btn btn-host">我是主持人（出题开房）</button></a>
-    <a href="/play.html"><button class="btn btn-play">我是玩家（加入游戏）</button></a>
-    <button class="sound" id="soundBtn" type="button">🔊 音乐开启</button>
+    <a href="/host.html"><button class="btn btn-host" data-i18n="host">我是主持人（出题开房）</button></a>
+    <a href="/play.html"><button class="btn btn-play" data-i18n="player">我是玩家（加入游戏）</button></a>
+    <button class="sound" id="soundBtn" type="button" data-i18n="musicOn">🔊 音乐开启</button>
     
     <div class="footer">
-      本地运行 · 局域网多人可用<br>
-      部署到公网后即可真正在线多人玩
+      <span data-i18n="footer">本地运行 · 局域网多人可用<br>部署到公网后即可真正在线多人玩</span>
     </div>
   </div>
-  <script src="/effects.js"></script>
-  <script>document.getElementById('soundBtn').onclick = () => { const muted = window.quizFx.toggleMute(); document.getElementById('soundBtn').textContent = muted ? '🔇 音乐静音' : '🔊 音乐开启'; };</script>
+  <script src="/i18n.js"></script><script src="/effects.js"></script>
+  <script>document.getElementById('soundBtn').onclick = () => { const muted = window.quizFx.toggleMute(); document.getElementById('soundBtn').textContent = muted ? (window.quizI18n.getLanguage() === 'zh' ? '🔇 音乐静音' : '🔇 Music Muted') : (window.quizI18n.getLanguage() === 'zh' ? '🔊 音乐开启' : '🔊 Music On'); };</script>
 </body>
 </html>
