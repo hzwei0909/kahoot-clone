@@ -8,6 +8,7 @@
   };
   const sounds = {
     answerClick: new Audio('/assets/%E5%8F%82%E4%B8%8E%E8%80%85%E7%82%B9%E5%87%BB%E9%80%89%E6%8B%A9%E7%AD%94%E6%A1%88%E9%9F%B3%E6%95%88.mp3'),
+    playerJoin: new Audio('/assets/%E5%8F%82%E4%B8%8E%E8%80%85%E5%8A%A0%E5%85%A5%E9%9F%B3%E6%95%88.mp3'),
     questionStart: new Audio('/assets/%E4%B8%BB%E6%8C%81%E4%BA%BA%E5%BC%80%E5%A7%8B%E6%AF%8F%E4%B8%80%E9%81%93%E9%A2%98%E9%9F%B3%E6%95%88.mp3'),
     questionEnd: new Audio('/assets/%E6%9C%AC%E9%A2%98%E7%AD%94%E9%A2%98%E7%BB%93%E6%9D%9F%E5%80%92%E8%AE%A1%E6%97%B6%E9%9F%B3%E6%95%88.mp3'),
     correct: new Audio('/assets/%E6%9C%AC%E9%A2%98%E7%AD%94%E9%A2%98%E6%AD%A3%E7%A1%AE%E9%9F%B3%E6%95%88.mp3'),
@@ -160,6 +161,7 @@
     unlock: unlockMedia,
     click: () => tone(520, 0.07, 'sine', 0.025),
     answerClick: () => playSound('answerClick'),
+    playerJoin: () => playSound('playerJoin'),
     start: () => { unlockMedia(); tone(392, 0.12, 'triangle', 0.045); tone(523.25, 0.2, 'triangle', 0.045, 0.1); },
     questionStart: () => playSound('questionStart'),
     questionEnd: () => playSound('questionEnd'),

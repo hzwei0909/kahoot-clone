@@ -66,20 +66,22 @@
     .btn-play { background: linear-gradient(135deg, #06b6d4, #0ea5e9); }
     .sound { border-color: rgba(129,140,248,.6); background: rgba(15,23,75,.8); color: #dbeafe; }
     .footer { color: #818bb8; }
-    .language-toggle { position: fixed; top: 18px; right: 18px; border: 1px solid rgba(129,140,248,.6); border-radius: 999px; padding: 8px 12px; color: #dbeafe; background: rgba(15,23,75,.8); cursor: pointer; z-index: 3; }
-    .brand-logo { display:block; width:min(480px, 94%); max-height:240px; object-fit:contain; margin:0 auto 16px; }
+    .home-controls { position:fixed; top:18px; right:18px; display:flex; gap:8px; z-index:3; }
+    .language-toggle, .sound { border: 1px solid rgba(129,140,248,.6); border-radius: 999px; padding: 8px 12px; color: #dbeafe; background: rgba(15,23,75,.8); cursor: pointer; }
+    .home-controls .sound { margin-top:0; }
+    .logo-crop { position:relative; overflow:hidden; width:min(480px, 94%); height:145px; margin:0 auto 10px; }
+    .brand-logo { position:absolute; width:100%; max-height:none; left:50%; top:50%; transform:translate(-50%, -50%); }
     .tagline { font-size:14px; line-height:1.7; color:#b9c2f4; margin:0 auto 26px; max-width:440px; }
   </style>
 </head>
 <body>
-  <button class="language-toggle" data-language-toggle type="button" onclick="window.quizI18n.toggle()">🌐 EN</button>
+  <div class="home-controls"><button class="sound" id="soundBtn" type="button" data-i18n="musicOn">🔊 音乐开启</button><button class="language-toggle" data-language-toggle type="button" onclick="window.quizI18n.toggle()">🌐 EN</button></div>
   <div class="card">
-    <img class="brand-logo" src="/assets/橙色趣味LOGO.png" alt="Live Quiz Logo">
+    <div class="logo-crop"><img class="brand-logo" src="/assets/橙色趣味LOGO.png" alt="Live Quiz Logo"></div>
     <p class="tagline" data-i18n="tagline">Huat ah! 让答题变成一场刺激的抢分挑战！扫码即玩，拼知识、拼速度、拼反应，看看谁才是真正的答题之王！</p>
     
     <a href="/host.html"><button class="btn btn-host" data-i18n="host">我是主持人（出题开房）</button></a>
     <a href="/play.html"><button class="btn btn-play" data-i18n="player">我是玩家（加入游戏）</button></a>
-    <button class="sound" id="soundBtn" type="button" data-i18n="musicOn">🔊 音乐开启</button>
     
     <div class="footer">
       <span data-i18n="footer">本地运行 · 局域网多人可用<br>部署到公网后即可真正在线多人玩</span>
