@@ -170,12 +170,10 @@ io.on('connection', (socket) => {
     socket.emit('game-phase', { phase: room.phase, startedAt: room.phaseStartedAt });
   });
 
-  // 主持人开始后，通知所有客户端切换到“游戏开始”音乐。
+  // 音乐从创建房间时开始；点击开始只同步当前开始阶段，不重置音乐进度。
   socket.on('start-game', ({ code }) => {
     const room = rooms.get(code?.toUpperCase());
     if (!room || room.hostId !== socket.id) return;
-    room.phase = 'start';
-    room.phaseStartedAt = Date.now();
     io.to(room.code).emit('game-phase', { phase: room.phase, startedAt: room.phaseStartedAt });
   });
 

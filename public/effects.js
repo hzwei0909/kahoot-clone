@@ -10,6 +10,10 @@
   let currentTrack = null;
   let currentTrackName = 'start';
   let currentPhaseStartedAt = 0;
+  let mediaUnlocked = false;
+  let pendingTrack = null;
+  let playRequestId = 0;
+  let celebrationTimer = null;
 
   const style = document.createElement('style');
   style.textContent = `
@@ -43,8 +47,14 @@
     currentTrackName = name;
     currentTrack = tracks[name];
     if (muted || !currentTrack) return;
+    if (!mediaUnlocked) {
+      pendingTrack = { name, offsetMs };
+      return;
+    }
+    const requestId = ++playRequestId;
     Object.values(tracks).forEach(track => { if (track !== currentTrack) { track.pause(); track.currentTime = 0; } });
     const play = () => {
+      if (requestId !== playRequestId) return;
       if (Number.isFinite(currentTrack.duration) && currentTrack.duration > 0) currentTrack.currentTime = (offsetMs / 1000) % currentTrack.duration;
       currentTrack.play().catch(() => {});
     };
@@ -52,10 +62,55 @@
     else currentTrack.addEventListener('loadedmetadata', play, { once: true });
   }
 
+  function unlockMedia() {
+    if (mediaUnlocked) {
+      audio();
+      return;
+    }
+    audio();
+    const probe = tracks.start;
+    probe.muted = true;
+    const result = probe.play();
+    const finish = () => {
+      probe.pause();
+      probe.currentTime = 0;
+      probe.muted = false;
+      mediaUnlocked = true;
+      if (pendingTrack) {
+        const next = pendingTrack;
+        pendingTrack = null;
+        playTrack(next.name, next.offsetMs);
+      }
+    };
+    if (result && typeof result.then === 'function') result.then(finish).catch(() => { mediaUnlocked = true; });
+    else finish();
+  }
+
+  function createConfettiBurst() {
+    const layer = document.createElement('div');
+    layer.className = 'confetti-layer';
+    const colors = ['#facc15', '#f97316', '#ef4444', '#22c55e', '#38bdf8', '#a78bfa', '#f472b6'];
+    ['left', 'right'].forEach(side => {
+      for (let i = 0; i < 24; i++) {
+        const piece = document.createElement('span');
+        piece.className = 'confetti-piece';
+        piece.style.left = side === 'left' ? `${Math.random() * 18}%` : `${82 + Math.random() * 18}%`;
+        piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.animationDelay = `${Math.random() * 0.35}s`;
+        piece.style.setProperty('--drift', `${(Math.random() * 180 - 90).toFixed(0)}px`);
+        piece.style.setProperty('--spin', `${(Math.random() * 900 - 450).toFixed(0)}deg`);
+        layer.appendChild(piece);
+      }
+    });
+    document.body.appendChild(layer);
+    setTimeout(() => layer.remove(), 2600);
+  }
+
   window.quizFx = {
     init: audio,
+    unlock: unlockMedia,
     click: () => tone(520, 0.07, 'sine', 0.025),
-    start: () => { tone(392, 0.12, 'triangle', 0.045); tone(523.25, 0.2, 'triangle', 0.045, 0.1); playTrack('start'); },
+    start: () => { unlockMedia(); tone(392, 0.12, 'triangle', 0.045); tone(523.25, 0.2, 'triangle', 0.045, 0.1); },
     setPhase: (phase, startedAt = 0) => {
       currentPhaseStartedAt = startedAt || Date.now();
       playTrack(phase, Math.max(0, Date.now() - currentPhaseStartedAt));
@@ -76,23 +131,18 @@
       return muted;
     },
     celebrate: () => {
-      const layer = document.createElement('div');
-      layer.className = 'confetti-layer';
-      const colors = ['#facc15', '#f97316', '#ef4444', '#22c55e', '#38bdf8', '#a78bfa', '#f472b6'];
-      ['left', 'right'].forEach(side => {
-        for (let i = 0; i < 30; i++) {
-          const piece = document.createElement('span');
-          piece.className = 'confetti-piece';
-          piece.style.left = side === 'left' ? `${Math.random() * 18}%` : `${82 + Math.random() * 18}%`;
-          piece.style.background = colors[Math.floor(Math.random() * colors.length)];
-          piece.style.animationDelay = `${Math.random() * 0.35}s`;
-          piece.style.setProperty('--drift', `${(Math.random() * 180 - 90).toFixed(0)}px`);
-          piece.style.setProperty('--spin', `${(Math.random() * 900 - 450).toFixed(0)}deg`);
-          layer.appendChild(piece);
-        }
-      });
-      document.body.appendChild(layer);
-      setTimeout(() => layer.remove(), 2600);
+      if (celebrationTimer) return;
+      const spray = () => {
+        createConfettiBurst();
+        celebrationTimer = setTimeout(spray, 1200 + Math.random() * 2600);
+      };
+      spray();
+    },
+    stopCelebration: () => {
+      if (celebrationTimer) clearTimeout(celebrationTimer);
+      celebrationTimer = null;
+      document.querySelectorAll('.confetti-layer').forEach(layer => layer.remove());
     }
   };
+  window.addEventListener('beforeunload', () => window.quizFx.stopCelebration());
 })();
