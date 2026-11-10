@@ -8,7 +8,7 @@
   <script src="/effects.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 92px 20px 28px; }
     .card { background: #1e293b; border-radius: 20px; padding: 28px; width: 100%; max-width: 400px; text-align: center; }
     h1 { font-size: 22px; margin-bottom: 20px; }
     input { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid #334155; background: #0f172a; color: #e2e8f0; font-size: 18px; margin-bottom: 16px; text-align: center; letter-spacing: 2px; }
@@ -33,7 +33,7 @@
     .podium-player { width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 800; }
     .podium-avatar { font-size: 42px; line-height: 1; margin-bottom: 6px; filter: drop-shadow(0 5px 4px rgba(0,0,0,.25)); }
     .podium-block { width: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-size: 24px; font-weight: 900; border-radius: 12px 12px 0 0; }
-    .podium-block > div:first-child { font-size:96px; line-height:.9; }
+    .podium-block > div:first-child { font-size:48px; line-height:1; margin-bottom:14px; }
     .podium-place.first { order: 2; } .podium-place.second { order: 1; } .podium-place.third { order: 3; }
     .first .podium-block { height: 150px; background: linear-gradient(#facc15, #ca8a04); color: #422006; }
     .second .podium-block { height: 105px; background: linear-gradient(#cbd5e1, #64748b); color: #0f172a; }
@@ -47,7 +47,7 @@
     .answer-status.wrong-status { display: block; color: #f87171; }
     .answer-status.empty-status { display: block; color: #fbbf24; }
     .back-home { display:inline-flex; margin-bottom:0; color:#c7d2fe; text-decoration:none; border:1px solid rgba(129,140,248,.45); border-radius:999px; padding:8px 14px; background:rgba(15,23,75,.72); }
-    .page-topbar { position:fixed; inset:16px 16px auto; z-index:5; display:flex; justify-content:space-between; align-items:center; gap:12px; }
+    .page-topbar { position:absolute; inset:16px 16px auto; z-index:5; display:flex; justify-content:space-between; align-items:center; gap:12px; }
     .page-topbar-left, .page-topbar-right { display:flex; gap:8px; align-items:center; }
     .page-topbar .sound-toggle, .page-topbar .language-toggle { position:static; }
     .language-toggle { border:1px solid #475569; background:#1e293b; color:#e2e8f0; border-radius:999px; padding:8px 12px; cursor:pointer; }
