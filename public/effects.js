@@ -6,6 +6,13 @@
     game: new Audio('/assets/%E6%B8%B8%E6%88%8F%E8%BF%87%E7%A8%8B%E8%83%8C%E6%99%AF%E9%9F%B3%E4%B9%90.mp3'),
     finish: new Audio('/assets/%E7%AD%94%E9%A2%98%E7%BB%93%E6%9D%9F%E6%8F%AD%E6%99%93%E5%86%A0%E5%86%9B%E9%9F%B3%E4%B9%90.mp3')
   };
+  const sounds = {
+    questionStart: new Audio('/assets/%E4%B8%BB%E6%8C%81%E4%BA%BA%E5%BC%80%E5%A7%8B%E6%AF%8F%E4%B8%80%E9%81%93%E9%A2%98%E9%9F%B3%E6%95%88.mp3'),
+    questionEnd: new Audio('/assets/%E6%9C%AC%E9%A2%98%E7%AD%94%E9%A2%98%E7%BB%93%E6%9D%9F%E5%80%92%E8%AE%A1%E6%97%B6%E9%9F%B3%E6%95%88.mp3'),
+    correct: new Audio('/assets/%E6%9C%AC%E9%A2%98%E7%AD%94%E9%A2%98%E6%AD%A3%E7%A1%AE%E9%9F%B3%E6%95%88.mp3'),
+    wrong: new Audio('/assets/%E6%9C%AC%E9%A2%98%E7%AD%94%E9%A2%98%E9%94%99%E8%AF%AF%E9%9F%B3%E6%95%88.mp3')
+  };
+  Object.values(sounds).forEach(sound => { sound.volume = 0.55; });
   Object.values(tracks).forEach(track => { track.loop = true; track.volume = 0.25; });
   let currentTrack = null;
   let currentTrackName = 'start';
@@ -86,6 +93,13 @@
     else finish();
   }
 
+  function playSound(name) {
+    const sound = sounds[name];
+    if (muted || !sound) return;
+    sound.currentTime = 0;
+    sound.play().catch(() => {});
+  }
+
   function createConfettiBurst() {
     const layer = document.createElement('div');
     layer.className = 'confetti-layer';
@@ -111,14 +125,16 @@
     unlock: unlockMedia,
     click: () => tone(520, 0.07, 'sine', 0.025),
     start: () => { unlockMedia(); tone(392, 0.12, 'triangle', 0.045); tone(523.25, 0.2, 'triangle', 0.045, 0.1); },
+    questionStart: () => playSound('questionStart'),
+    questionEnd: () => playSound('questionEnd'),
     setPhase: (phase, startedAt = 0) => {
       currentPhaseStartedAt = startedAt || Date.now();
       playTrack(phase, Math.max(0, Date.now() - currentPhaseStartedAt));
     },
     game: () => playTrack('game'),
     finish: () => playTrack('finish'),
-    correct: () => { tone(523.25, 0.12, 'sine', 0.05); tone(659.25, 0.18, 'sine', 0.05, 0.11); },
-    wrong: () => { tone(220, 0.2, 'sawtooth', 0.035); tone(174.61, 0.25, 'sawtooth', 0.03, 0.12); },
+    correct: () => playSound('correct'),
+    wrong: () => playSound('wrong'),
     toggleMute: () => {
       audio();
       muted = !muted;

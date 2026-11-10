@@ -19,6 +19,7 @@ app.use(express.json());
 
 // 内存中的房间数据（重启会丢失，适合演示）
 const rooms = new Map();
+const QUESTION_TIME_LIMIT = 15;
 const avatars = ['😀', '😎', '🤩', '🥳', '🦊', '🐼', '🐸', '🦄', '🐯', '🐨', '🚀', '🌟'];
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
@@ -109,6 +110,7 @@ app.post('/api/create-room', async (req, res) => {
     phase: 'start',
     phaseStartedAt: Date.now(),
     questionStartTime: null,
+    questionTimer: null,
     answers: new Map(), // questionIndex -> Map(playerId -> {answer, time})
   };
 
@@ -224,7 +226,7 @@ io.on('connection', (socket) => {
     const room = rooms.get(code?.toUpperCase());
     if (!room || room.hostId !== socket.id) return;
     if (room.status === 'finished') return;
-    if (room.currentQuestionIndex >= room.questions.length - 1 && room.status === 'question') return;
+    if (room.currentQuestionIndex >= 0 && room.status !== 'reveal') return;
 
     room.currentQuestionIndex += 1;
 
@@ -256,7 +258,7 @@ io.on('connection', (socket) => {
       total: room.questions.length,
       text: q.text,
       options: q.options,
-      timeLimit: 15,
+      timeLimit: QUESTION_TIME_LIMIT,
       startedAt: room.questionStartTime
     };
 
@@ -269,6 +271,7 @@ io.on('connection', (socket) => {
       ...playerQuestion,
       correctIndex: q.correctIndex
     });
+    room.questionTimer = setTimeout(() => revealRoom(room), QUESTION_TIME_LIMIT * 1000);
   });
 
   // 玩家提交答案
@@ -287,7 +290,7 @@ io.on('connection', (socket) => {
     const now = Date.now();
     const elapsed = (now - room.questionStartTime) / 1000;
     const q = room.questions[qIndex];
-    const timeLimit = 15;
+    const timeLimit = QUESTION_TIME_LIMIT;
 
     if (elapsed >= timeLimit) return;
 
@@ -322,44 +325,43 @@ io.on('connection', (socket) => {
     io.to(roomCode).emit('score-update', ranking);
   });
 
-  // 主持人主动揭晓答案（可选）
-  socket.on('reveal-answer', ({ code }) => {
-    const room = rooms.get(code?.toUpperCase());
-    if (!room || room.hostId !== socket.id) return;
+  function revealRoom(room) {
+    if (!room || room.status !== 'question') return;
+    if (room.questionTimer) clearTimeout(room.questionTimer);
+    room.questionTimer = null;
     room.status = 'reveal';
 
     const qIndex = room.currentQuestionIndex;
     const q = room.questions[qIndex];
     const answersMap = room.answers.get(qIndex) || new Map();
-
-    // 统计选项人数
     const optionStats = q.options.map((_, idx) => {
       let count = 0;
-      for (const a of answersMap.values()) {
-        if (a.answerIndex === idx) count++;
-      }
+      for (const answer of answersMap.values()) if (answer.answerIndex === idx) count++;
       return count;
     });
+    const ranking = Array.from(room.players.values())
+      .sort((a, b) => b.score - a.score)
+      .map(p => ({ nickname: p.nickname, avatar: p.avatar, score: p.score }));
 
-    io.to(code.toUpperCase()).emit('reveal', {
-      correctIndex: q.correctIndex,
-      optionStats,
-      ranking: Array.from(room.players.values())
-        .sort((a, b) => b.score - a.score)
-        .map(p => ({ nickname: p.nickname, avatar: p.avatar, score: p.score }))
-    });
+    io.to(room.code).emit('reveal', { correctIndex: q.correctIndex, optionStats, ranking });
 
-    // 最后一题只有主持人点击“揭晓答案”后，才公布最终奖台和完整排名。
     if (qIndex === room.questions.length - 1) {
       room.status = 'finished';
       room.phase = 'finish';
       room.phaseStartedAt = Date.now();
-      io.to(code.toUpperCase()).emit('game-phase', { phase: room.phase, startedAt: room.phaseStartedAt });
+      io.to(room.code).emit('game-phase', { phase: room.phase, startedAt: room.phaseStartedAt });
       const finalRanking = Array.from(room.players.values())
         .sort((a, b) => b.score - a.score)
         .map((p, i) => ({ rank: i + 1, nickname: p.nickname, avatar: p.avatar, score: p.score }));
-      io.to(code.toUpperCase()).emit('game-over', { ranking: finalRanking });
+      io.to(room.code).emit('game-over', { ranking: finalRanking });
     }
+  }
+
+  // 兼容主持人主动揭晓；正式流程会在 15 秒到点自动揭晓。
+  socket.on('reveal-answer', ({ code }) => {
+    const room = rooms.get(code?.toUpperCase());
+    if (!room || room.hostId !== socket.id) return;
+    revealRoom(room);
   });
 
   socket.on('disconnect', () => {
