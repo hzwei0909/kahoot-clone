@@ -8,6 +8,16 @@
   };
   Object.values(tracks).forEach(track => { track.loop = true; track.volume = 0.25; });
   let currentTrack = null;
+  let currentTrackName = 'start';
+  let currentPhaseStartedAt = 0;
+
+  const style = document.createElement('style');
+  style.textContent = `
+    .confetti-layer { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 9999; }
+    .confetti-piece { position: absolute; top: -24px; width: 10px; height: 16px; opacity: 0; animation: confetti-fall 1.8s cubic-bezier(.15,.75,.3,1) forwards; }
+    @keyframes confetti-fall { 0% { opacity: 1; transform: translate3d(0, -20px, 0) rotate(0deg); } 100% { opacity: 0; transform: translate3d(var(--drift), 105vh, 0) rotate(var(--spin)); } }
+  `;
+  document.head.appendChild(style);
 
   function audio() {
     if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -30,6 +40,7 @@
   }
 
   function playTrack(name, offsetMs = 0) {
+    currentTrackName = name;
     currentTrack = tracks[name];
     if (muted || !currentTrack) return;
     Object.values(tracks).forEach(track => { if (track !== currentTrack) { track.pause(); track.currentTime = 0; } });
@@ -45,7 +56,10 @@
     init: audio,
     click: () => tone(520, 0.07, 'sine', 0.025),
     start: () => { tone(392, 0.12, 'triangle', 0.045); tone(523.25, 0.2, 'triangle', 0.045, 0.1); playTrack('start'); },
-    setPhase: (phase, startedAt = 0) => playTrack(phase, startedAt ? Math.max(0, Date.now() - startedAt) : 0),
+    setPhase: (phase, startedAt = 0) => {
+      currentPhaseStartedAt = startedAt || Date.now();
+      playTrack(phase, Math.max(0, Date.now() - currentPhaseStartedAt));
+    },
     game: () => playTrack('game'),
     finish: () => playTrack('finish'),
     correct: () => { tone(523.25, 0.12, 'sine', 0.05); tone(659.25, 0.18, 'sine', 0.05, 0.11); },
@@ -56,9 +70,29 @@
       if (muted) {
         Object.values(tracks).forEach(track => track.pause());
       } else {
-        playTrack(currentTrack === tracks.game ? 'game' : currentTrack === tracks.finish ? 'finish' : 'start');
+        const offset = currentPhaseStartedAt ? Math.max(0, Date.now() - currentPhaseStartedAt) : 0;
+        playTrack(currentTrackName, offset);
       }
       return muted;
+    },
+    celebrate: () => {
+      const layer = document.createElement('div');
+      layer.className = 'confetti-layer';
+      const colors = ['#facc15', '#f97316', '#ef4444', '#22c55e', '#38bdf8', '#a78bfa', '#f472b6'];
+      ['left', 'right'].forEach(side => {
+        for (let i = 0; i < 30; i++) {
+          const piece = document.createElement('span');
+          piece.className = 'confetti-piece';
+          piece.style.left = side === 'left' ? `${Math.random() * 18}%` : `${82 + Math.random() * 18}%`;
+          piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+          piece.style.animationDelay = `${Math.random() * 0.35}s`;
+          piece.style.setProperty('--drift', `${(Math.random() * 180 - 90).toFixed(0)}px`);
+          piece.style.setProperty('--spin', `${(Math.random() * 900 - 450).toFixed(0)}deg`);
+          layer.appendChild(piece);
+        }
+      });
+      document.body.appendChild(layer);
+      setTimeout(() => layer.remove(), 2600);
     }
   };
 })();

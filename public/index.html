@@ -51,7 +51,7 @@
     .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
     .btn-host { background: #667eea; color: white; }
     .btn-play { background: #10b981; color: white; }
-    a { transition: transform .2s ease, box-shadow .2s ease; }
+    a { color: inherit; text-decoration: none; transition: transform .2s ease, box-shadow .2s ease; }
     a:hover { transform: translateY(-3px); box-shadow: 0 12px 24px rgba(0,0,0,.18); }
     .sound { margin-top: 22px; border: 1px solid #ddd; border-radius: 999px; background: #f8fafc; color: #475569; padding: 8px 14px; cursor: pointer; }
     .footer { margin-top: 24px; font-size: 13px; color: #999; }
@@ -64,7 +64,7 @@
     
     <a href="/host.html"><button class="btn btn-host">我是主持人（出题开房）</button></a>
     <a href="/play.html"><button class="btn btn-play">我是玩家（加入游戏）</button></a>
-    <button class="sound" id="soundBtn" type="button">🔊 音乐播放中</button>
+    <button class="sound" id="soundBtn" type="button">🔊 音乐开启</button>
     
     <div class="footer">
       本地运行 · 局域网多人可用<br>
@@ -72,6 +72,6 @@
     </div>
   </div>
   <script src="/effects.js"></script>
-  <script>document.getElementById('soundBtn').onclick = () => { const muted = window.quizFx.toggleMute(); document.getElementById('soundBtn').textContent = muted ? '🔇 音乐已静音' : '🔊 音乐播放中'; };</script>
+  <script>document.getElementById('soundBtn').onclick = () => { const muted = window.quizFx.toggleMute(); document.getElementById('soundBtn').textContent = muted ? '🔇 音乐静音' : '🔊 音乐开启'; };</script>
 </body>
 </html>
