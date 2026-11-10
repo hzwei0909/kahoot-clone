@@ -1,6 +1,6 @@
 (() => {
   let ctx;
-  let muted = false;
+  let musicMuted = false;
   const tracks = {
     start: new Audio('/assets/%E6%B8%B8%E6%88%8F%E5%BC%80%E5%A7%8B%E5%87%86%E5%A4%87%E9%9F%B3%E4%B9%90.mp3'),
     game: new Audio('/assets/%E6%B8%B8%E6%88%8F%E8%BF%87%E7%A8%8B%E8%83%8C%E6%99%AF%E9%9F%B3%E4%B9%90.mp3'),
@@ -58,7 +58,7 @@
   function playTrack(name, offsetMs = 0) {
     currentTrackName = name;
     currentTrack = tracks[name];
-    if (muted || !currentTrack) return;
+    if (musicMuted || !currentTrack) return;
     if (!mediaUnlocked) {
       pendingTrack = { name, offsetMs };
       return;
@@ -116,14 +116,14 @@
 
   function playSound(name) {
     const sound = sounds[name];
-    if (muted || !sound) return;
+    if (!sound) return;
     sfxResumeTrack = currentTrack && !currentTrack.paused ? currentTrack : null;
     if (musicRampTimer) clearInterval(musicRampTimer);
     Object.values(tracks).forEach(track => { track.volume = 0; if (track !== sfxResumeTrack) track.pause(); });
     if (sfxResumeTrack) sfxResumeTrack.pause();
     sound.currentTime = 0;
     const restore = () => {
-      if (sfxResumeTrack && !muted && currentTrack === sfxResumeTrack) {
+      if (sfxResumeTrack && !musicMuted && currentTrack === sfxResumeTrack) {
         sfxResumeTrack.volume = 0;
         sfxResumeTrack.play().catch(() => {});
         rampMusic(MUSIC_VOLUME, 420);
@@ -181,15 +181,14 @@
     wrong: () => playSound('wrong'),
     toggleMute: () => {
       audio();
-      muted = !muted;
-      if (muted) {
+      musicMuted = !musicMuted;
+      if (musicMuted) {
         Object.values(tracks).forEach(track => track.pause());
-        Object.values(sounds).forEach(sound => sound.pause());
       } else {
         const offset = currentPhaseStartedAt ? Math.max(0, Date.now() - currentPhaseStartedAt) : 0;
         playTrack(currentTrackName, offset);
       }
-      return muted;
+      return musicMuted;
     },
     celebrate: () => {
       if (celebrationTimer) return;

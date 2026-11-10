@@ -218,6 +218,7 @@ io.on('connection', (socket) => {
       avatar: p.avatar,
       score: p.score
     })));
+    io.to(roomCode).emit('participant-joined', { nickname: player.nickname, avatar: player.avatar });
     socket.emit('game-phase', { phase: room.phase, startedAt: room.phaseStartedAt });
   });
 
