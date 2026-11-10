@@ -124,6 +124,10 @@
     .back-home { background: rgba(15,23,75,.7); }
     .language-toggle { border: 1px solid #475569; background: #1e293b; color: #e2e8f0; border-radius: 999px; padding: 8px 12px; cursor: pointer; }
     .btn-secondary { background: linear-gradient(135deg, #334155, #475569); color:#fff; display:inline-block; text-decoration:none; }
+    .file-picker { display:flex; align-items:center; gap:10px; width:100%; padding:10px; margin-bottom:12px; border:1px solid rgba(99,102,241,.5); border-radius:8px; background:rgba(7,11,44,.86); color:#cbd5e1; }
+    .file-picker input { position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
+    .file-picker-button { display:inline-block; padding:7px 12px; border-radius:7px; background:#334155; color:#fff; font-weight:700; cursor:pointer; white-space:nowrap; }
+    .file-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .final-card { padding: clamp(22px, 4vw, 42px); }
     .final-kicker { text-align:center; color:#67e8f9; letter-spacing:.18em; font-size:13px; font-weight:900; text-transform:uppercase; }
     .final-title { text-align:center; margin:8px 0 6px; font-size:clamp(28px, 4vw, 42px); }
@@ -147,7 +151,7 @@
     <div class="top-actions"></div>
     <div id="setup"><div class="card">
       <label data-i18n="activityTitle">活动标题</label><input id="quizTitle" value="趣味知识竞赛" placeholder="例如：公司年会知识竞赛">
-      <div class="import-box"><label data-i18n="importTitle">一键导入题目（CSV 格式）</label><input id="questionFile" type="file" accept=".csv,text/csv"><button class="btn btn-primary" type="button" onclick="importQuestions()" data-i18n="importButton">导入 CSV 题库</button><a class="btn btn-secondary" href="/questions.example.csv" download data-i18n="downloadTemplate">下载题目模板</a><small>表头：题目,选项A,选项B,选项C,选项D,正确答案。正确答案填写 A、B、C 或 D。</small></div>
+      <div class="import-box"><label data-i18n="importTitle">一键导入题目（CSV 格式）</label><div class="file-picker"><input id="questionFile" type="file" accept=".csv,text/csv"><label class="file-picker-button" for="questionFile" data-i18n="chooseFile">选择文件</label><span class="file-name" id="fileName" data-i18n="noFile">未选择任何文件</span></div><button class="btn btn-primary" type="button" onclick="importQuestions()" data-i18n="importButton">导入 CSV 题库</button><a class="btn btn-secondary" href="/questions.example.csv" download data-i18n="downloadTemplate">下载题目模板</a><small data-i18n="csvHint">表头：题目,选项A,选项B,选项C,选项D,正确答案。正确答案填写 A、B、C 或 D。</small></div>
       <label data-i18n="questionList">题目列表（可添加多道）</label><div id="questionsList"></div>
       <button class="btn btn-primary" onclick="addQuestion()" data-i18n="addQuestion">+ 添加题目</button><button class="btn btn-success" onclick="createRoom()" data-i18n="createRoom">创建房间并生成二维码</button>
     </div></div>
@@ -167,6 +171,8 @@
   <script>
     const socket = io(); let currentCode = null; let questions = []; let timerInterval = null; let autoNextTimer = null; let timeLeft = 20; let questionEndPlayed = false; let currentQuestionIsLast = false; let currentOptionStats = [0, 0, 0, 0]; let speedRanking = []; let roundRevealed = false; let knownPlayerCount = null; let finalParticipantCount = null;
     document.getElementById('soundToggle').onclick = () => { const muted = window.quizFx.toggleMute(); const zh = window.quizI18n.getLanguage() === 'zh'; document.getElementById('soundToggle').textContent = muted ? (zh ? '🔇 音乐静音' : '🔇 Music Muted') : (zh ? '🔊 音乐开启' : '🔊 Music On'); };
+    document.getElementById('questionFile').addEventListener('change', event => { document.getElementById('fileName').textContent = event.target.files[0]?.name || window.quizI18n.t('noFile'); });
+    window.addEventListener('languagechange', () => { if (!document.getElementById('questionFile').files.length) document.getElementById('fileName').textContent = window.quizI18n.t('noFile'); });
     document.addEventListener('click', e => { if (e.target.matches('button')) window.quizFx.click(); });
     const questionBank = [
       { text: '中国的首都是哪里？', options: ['上海', '北京', '广州', '深圳'], correctIndex: 1, timeLimit: 15 },

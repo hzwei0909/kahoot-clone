@@ -15,6 +15,12 @@
   };
   dict.zh.playAgain = '再来一局';
   dict.en.playAgain = 'Play again';
+  dict.zh.chooseFile = '选择文件';
+  dict.en.chooseFile = 'Choose file';
+  dict.zh.noFile = '未选择任何文件';
+  dict.en.noFile = 'No file selected';
+  dict.zh.csvHint = '表头：题目,选项A,选项B,选项C,选项D,正确答案。正确答案填写 A、B、C 或 D。';
+  dict.en.csvHint = 'Headers: Question, Option A, Option B, Option C, Option D, Correct answer. Use A, B, C or D.';
   const languageVersion = 'english-default-v1';
   let lang = localStorage.getItem('quiz-language-version') === languageVersion ? (localStorage.getItem('quiz-language') || 'en') : 'en';
   function apply() {
