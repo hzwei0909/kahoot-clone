@@ -76,15 +76,20 @@
     .game-meta > span:last-child { text-align: right; color: #67e8f9; }
     .progress-track { height: 10px; border-radius: 999px; background: #252b5f; overflow: hidden; box-shadow: inset 0 2px 5px rgba(0,0,0,.35); }
     .progress-fill { height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, #22d3ee, #6366f1); box-shadow: 0 0 16px rgba(34,211,238,.65); transition: width .45s ease; }
-    .round-status-panel { min-height: 178px; display: flex; align-items: center; justify-content: center; margin: 4px 0 20px; }
-    .countdown-panel { width: 176px; height: 176px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 12px solid #22d3ee; box-shadow: 0 0 0 8px rgba(124,58,237,.45), 0 0 38px rgba(34,211,238,.55); background: radial-gradient(circle, #18205f, #0b1038 70%); }
+    .host-block { border:1px solid rgba(129,140,248,.28); border-radius:18px; padding:16px 18px; background:rgba(7,11,44,.28); margin-bottom:14px; }
+    .host-overview { padding-bottom:14px; }
+    .host-question-block { padding-top:12px; }
+    .host-ranking-block { margin-bottom:0; }
+    .round-status-panel { min-height: 150px; display: flex; align-items: center; justify-content: center; margin: 4px 0 14px; }
+    .countdown-panel { width:auto; height:auto; min-width:150px; border-radius:999px; display:flex; align-items:center; justify-content:center; border:1px solid rgba(34,211,238,.7); padding:14px 28px; box-shadow:0 0 24px rgba(34,211,238,.22); background:rgba(6,182,212,.12); }
     #timerDisplay { border: 0; padding: 0; background: none; box-shadow: none; font-size: 48px; color: #fff !important; }
-    .bar-chart { width: min(760px, 100%); height: 178px; display: none; align-items: end; justify-content: space-around; gap: 22px; padding: 14px 28px 0; border-bottom: 2px solid rgba(199,210,254,.75); position: relative; }
+    .bar-chart { width: min(760px, 100%); height: 178px; display: none; align-items: end; justify-content: space-around; gap: 22px; padding: 14px 28px 30px; position: relative; }
+    .bar-chart::after { content:''; position:absolute; left:28px; right:28px; bottom:28px; height:2px; background:rgba(199,210,254,.75); }
     .bar-chart::before { content: '选择人数'; position: absolute; top: 0; left: 0; color: #a5b4fc; font-size: 13px; }
-    .bar-column { height: 100%; flex: 1; display: flex; flex-direction: column; justify-content: end; align-items: center; gap: 7px; }
+    .bar-column { height:100%; flex:1; display:flex; flex-direction:column; justify-content:end; align-items:center; gap:7px; position:relative; z-index:1; }
     .bar-value { color: #fff; font-weight: 900; font-size: 18px; }
     .bar-fill { width: min(76px, 70%); min-height: 5px; border-radius: 12px 12px 0 0; transform-origin: bottom; animation: bar-grow .7s cubic-bezier(.2,.8,.3,1) both; }
-    .bar-label { font-size: 18px; font-weight: 900; color: #e0e7ff; }
+    .bar-label { font-size:18px; font-weight:900; color:#e0e7ff; position:absolute; bottom:-30px; }
     .bar-a { background: linear-gradient(#fb7185, #e11d48); } .bar-b { background: linear-gradient(#38bdf8, #2563eb); } .bar-c { background: linear-gradient(#fde047, #eab308); } .bar-d { background: linear-gradient(#4ade80, #16a34a); }
     @keyframes bar-grow { from { transform: scaleY(0); opacity: .3; } to { transform: scaleY(1); opacity: 1; } }
     .ranking-title { text-align: center; width: fit-content; margin: 12px auto 16px; padding: 9px 26px; border-radius: 999px; color: #fff; font-weight: 900; background: linear-gradient(135deg, #7c3aed, #4f46e5); box-shadow: 0 0 20px rgba(124,58,237,.4); }
@@ -136,9 +141,9 @@
   </style>
 </head>
 <body>
-  <div class="page-topbar"><div class="page-topbar-left"><a class="back-home" href="/" data-i18n="backHome">← 返回首页</a></div><div class="page-topbar-right"><button class="sound-toggle" id="soundToggle" type="button" data-i18n="musicOn">🔊 音乐开启</button><button class="language-toggle" data-language-toggle type="button" onclick="window.quizI18n.toggle()">🌐 EN</button></div></div>
+  <div class="page-topbar"><div class="page-topbar-left"><div class="host-logo-crop"><img class="host-logo" src="/assets/橙色趣味LOGO.png" alt="Live Quiz Logo"></div></div><div class="page-topbar-right"><a class="back-home" href="/" data-i18n="backHome">← 返回首页</a><button class="sound-toggle" id="soundToggle" type="button" data-i18n="musicOn">🔊 音乐开启</button><button class="language-toggle" data-language-toggle type="button" onclick="window.quizI18n.toggle()">🌐 EN</button></div></div>
   <div class="container">
-    <div class="top-actions"><div class="host-logo-crop"><img class="host-logo" src="/assets/橙色趣味LOGO.png" alt="Live Quiz Logo"></div></div>
+    <div class="top-actions"></div>
     <div id="setup"><div class="card">
       <label data-i18n="activityTitle">活动标题</label><input id="quizTitle" value="趣味知识竞赛" placeholder="例如：公司年会知识竞赛">
       <div class="import-box"><label data-i18n="importTitle">一键导入题目（CSV 格式）</label><input id="questionFile" type="file" accept=".csv,text/csv"><button class="btn btn-primary" type="button" onclick="importQuestions()" data-i18n="importButton">导入 CSV 题库</button><a class="btn btn-secondary" href="/questions.example.csv" download data-i18n="downloadTemplate">下载题目模板</a><small>表头：题目,选项A,选项B,选项C,选项D,正确答案。正确答案填写 A、B、C 或 D。</small></div>
@@ -152,12 +157,9 @@
       <div style="margin-top:24px;text-align:center;"><button class="btn btn-success" id="startBtn" onclick="startGame()" disabled data-i18n="startFirst">开始第一题</button><button class="btn" type="button" onclick="backToSetup()" data-i18n="backPrevious">← 返回上一步</button></div>
     </div></div>
     <div id="game"><div class="card">
-      <div class="game-top-row"><div class="game-state-title" id="gameStateTitle">答题进行中</div><div class="game-actions-top"><button class="btn btn-warning" id="revealBtn" onclick="revealAnswer()" disabled style="display:none;">揭晓答案</button><button class="btn btn-success" id="nextBtn" onclick="nextQuestion()" disabled>等待本题揭晓</button></div></div>
-      <div class="game-meta"><span id="qProgress">第 1 / 5 题</span><div class="progress-track"><div class="progress-fill" id="questionProgressFill"></div></div><span id="onlineCount">0 人在线</span></div>
-      <div class="round-status-panel"><div class="countdown-panel" id="countdownPanel"><span id="timerDisplay">15s</span></div><div class="bar-chart" id="answerBarChart"></div></div>
-      <div class="question-display" id="questionText">题目内容</div>
-      <div class="options-grid" id="optionsDisplay"></div>
-      <div class="ranking-title" id="rankingTitle">答题速度实时排名</div><div class="ranking" id="liveRanking"></div>
+      <section class="host-block host-overview"><div class="game-top-row"><div class="game-state-title" id="gameStateTitle">答题进行中</div><div class="game-actions-top"><button class="btn btn-warning" id="revealBtn" onclick="revealAnswer()" disabled style="display:none;">揭晓答案</button><button class="btn btn-success" id="nextBtn" onclick="nextQuestion()" disabled>等待本题揭晓</button></div></div><div class="game-meta"><span id="qProgress">第 1 / 5 题</span><div class="progress-track"><div class="progress-fill" id="questionProgressFill"></div></div><span id="onlineCount">0 人在线</span></div></section>
+      <section class="host-block host-question-block"><div class="round-status-panel"><div class="countdown-panel" id="countdownPanel"><span id="timerDisplay">15s</span></div><div class="bar-chart" id="answerBarChart"></div></div><div class="question-display" id="questionText">题目内容</div><div class="options-grid" id="optionsDisplay"></div></section>
+      <section class="host-block host-ranking-block"><div class="ranking-title" id="rankingTitle">答题速度实时排名</div><div class="ranking" id="liveRanking"></div></section>
     </div></div>
     <div id="finished"><div class="card final-card"><div class="final-kicker" data-i18n="gameComplete">GAME COMPLETE</div><h2 class="final-title" data-i18n="finalRanking">🏆 最终排名</h2><p class="final-subtitle" data-i18n="finalSubtitle">本局答题完成，感谢所有参与者</p><div class="final-meta"><span id="finalSessionMeta">0 人参与</span><span data-i18n="hostView">主持人视图</span></div><div class="podium" id="finalPodium"></div><div class="final-ranking-heading"><span data-i18n="fullResults">完整成绩单</span><span data-i18n="totalPoints">总积分</span></div><div class="final-ranking-list" id="finalRanking"></div><div class="final-actions"><button class="btn btn-primary" onclick="location.reload()">再来一局</button><button class="btn" onclick="backToSetup()" data-i18n="backHome">返回首页</button></div></div></div>
   </div>
