@@ -345,8 +345,7 @@ io.on('connection', (socket) => {
     if (room.currentQuestionIndex === room.questions.length - 1) {
       if (room.questionTimer) clearTimeout(room.questionTimer);
       room.questionTimer = null;
-      room.status = 'reveal-ready';
-      io.to(room.code).emit('final-reveal-ready');
+      revealRoom(room);
       return;
     }
     revealRoom(room);
@@ -377,26 +376,27 @@ io.on('connection', (socket) => {
       room.phase = 'result';
       room.phaseStartedAt = Date.now();
       io.to(room.code).emit('game-phase', { phase: room.phase, startedAt: room.phaseStartedAt });
-      const finalRanking = Array.from(room.players.values())
-        .sort((a, b) => b.score - a.score)
-        .map((p, i) => ({ id: p.id, rank: i + 1, nickname: p.nickname, avatar: p.avatar, score: p.score }));
-      // Kahoot 式流程：先完整展示最后一题结果和本题积分排名，再进入最终领奖台。
-      setTimeout(() => {
-        if (room.status !== 'final-result') return;
-        room.status = 'finished';
-        room.phase = 'finish';
-        room.phaseStartedAt = Date.now();
-        io.to(room.code).emit('game-phase', { phase: room.phase, startedAt: room.phaseStartedAt });
-        io.to(room.code).emit('game-over', { ranking: finalRanking });
-      }, 5000);
     }
   }
 
-  // 兼容主持人主动揭晓；正式流程会在 15 秒到点自动揭晓。
+  // 最后一题自动显示本题结果；主持人点击“揭晓答案”后才进入最终领奖台。
   socket.on('reveal-answer', ({ code }) => {
     const room = rooms.get(code?.toUpperCase());
     if (!room || room.hostId !== socket.id) return;
     revealRoom(room);
+  });
+
+  socket.on('publish-final-result', ({ code }) => {
+    const room = rooms.get(code?.toUpperCase());
+    if (!room || room.hostId !== socket.id || room.status !== 'final-result') return;
+    room.status = 'finished';
+    room.phase = 'finish';
+    room.phaseStartedAt = Date.now();
+    io.to(room.code).emit('game-phase', { phase: room.phase, startedAt: room.phaseStartedAt });
+    const finalRanking = Array.from(room.players.values())
+      .sort((a, b) => b.score - a.score)
+      .map((p, i) => ({ id: p.id, rank: i + 1, nickname: p.nickname, avatar: p.avatar, score: p.score }));
+    io.to(room.code).emit('game-over', { ranking: finalRanking });
   });
 
   socket.on('disconnect', () => {
