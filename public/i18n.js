@@ -13,7 +13,8 @@
       language: '中文', joinedRoom: 'Joined the room', waitingHost: 'Waiting for the host to start...', currentRanking: 'Current ranking', finalRanking: '🏆 Final ranking', myFinalScore: 'My final score', currentTotal: 'Current total', resultWaiting: 'Waiting for the answer...', answering: 'Question in progress', questionEnded: 'Question ended', speedRanking: 'Live speed ranking', scoreRanking: 'Current score ranking', questionList: 'Question list', playerJoined: 'Players joined:', hostJoinHint: 'Scan the QR code or open /play.html and enter the room code', noPlayers: 'No players joined yet', deleteQuestion: 'Delete question', answerOptions: 'Options (select the correct answer)', noAnswer: 'No answer', correct: 'Correct!', wrong: 'Incorrect', gameComplete: 'GAME COMPLETE', finalSubtitle: 'The quiz is complete. Thanks for playing!', hostView: 'Host view', fullResults: 'Full results', totalPoints: 'Total points', nextQuestion: 'Next question', revealAnswer: 'Reveal answer', waitingRevealButton: 'Waiting for reveal', points: 'pts', roundNumber: (n, total) => `Question ${n} / ${total}`, playersOnline: n => `${n} online`, lobbyHint: 'Scan the QR code or open /play.html and enter the room code'
     }
   };
-  let lang = localStorage.getItem('quiz-language') || 'zh';
+  const languageVersion = 'english-default-v1';
+  let lang = localStorage.getItem('quiz-language-version') === languageVersion ? (localStorage.getItem('quiz-language') || 'en') : 'en';
   function apply() {
     const t = dict[lang];
     document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
@@ -23,7 +24,7 @@
     document.querySelectorAll('[data-language-toggle]').forEach(el => { el.textContent = `🌐 ${t.language}`; });
     window.dispatchEvent(new Event('languagechange'));
   }
-  function toggle() { lang = lang === 'zh' ? 'en' : 'zh'; localStorage.setItem('quiz-language', lang); apply(); }
+  function toggle() { lang = lang === 'zh' ? 'en' : 'zh'; localStorage.setItem('quiz-language', lang); localStorage.setItem('quiz-language-version', languageVersion); apply(); }
   window.quizI18n = { toggle, apply, getLanguage: () => lang, t: key => dict[lang][key] || key };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply); else apply();
 })();
