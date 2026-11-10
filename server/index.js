@@ -310,6 +310,19 @@ io.on('connection', (socket) => {
       player.score += points;
     }
 
+    const optionStats = q.options.map((_, idx) => {
+      let count = 0;
+      for (const answer of answersMap.values()) if (answer.answerIndex === idx) count++;
+      return count;
+    });
+    io.to(roomCode).emit('answer-progress', {
+      nickname: player?.nickname || '玩家',
+      avatar: player?.avatar || avatars[0],
+      answerIndex,
+      optionStats,
+      answeredCount: answersMap.size
+    });
+
     // 通知该玩家自己的得分
     socket.emit('answer-result', {
       isCorrect,
