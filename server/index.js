@@ -271,7 +271,7 @@ io.on('connection', (socket) => {
       ...playerQuestion,
       correctIndex: q.correctIndex
     });
-    room.questionTimer = setTimeout(() => revealRoom(room), QUESTION_TIME_LIMIT * 1000);
+    room.questionTimer = setTimeout(() => expireQuestion(room), QUESTION_TIME_LIMIT * 1000);
   });
 
   // 玩家提交答案
@@ -325,8 +325,20 @@ io.on('connection', (socket) => {
     io.to(roomCode).emit('score-update', ranking);
   });
 
-  function revealRoom(room) {
+  function expireQuestion(room) {
     if (!room || room.status !== 'question') return;
+    if (room.currentQuestionIndex === room.questions.length - 1) {
+      if (room.questionTimer) clearTimeout(room.questionTimer);
+      room.questionTimer = null;
+      room.status = 'reveal-ready';
+      io.to(room.code).emit('final-reveal-ready');
+      return;
+    }
+    revealRoom(room);
+  }
+
+  function revealRoom(room) {
+    if (!room || !['question', 'reveal-ready'].includes(room.status)) return;
     if (room.questionTimer) clearTimeout(room.questionTimer);
     room.questionTimer = null;
     room.status = 'reveal';
