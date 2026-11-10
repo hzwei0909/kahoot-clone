@@ -105,6 +105,21 @@
     .live-rank-grid .rank-item:nth-child(2) { border: 2px solid #cbd5e1; }
     .live-rank-grid .rank-item:nth-child(3) { border: 2px solid #d97706; }
     .back-home { background: rgba(15,23,75,.7); }
+    .final-card { padding: clamp(22px, 4vw, 42px); }
+    .final-kicker { text-align:center; color:#67e8f9; letter-spacing:.18em; font-size:13px; font-weight:900; text-transform:uppercase; }
+    .final-title { text-align:center; margin:8px 0 6px; font-size:clamp(28px, 4vw, 42px); }
+    .final-subtitle { text-align:center; color:#aeb9ef; margin-bottom:18px; }
+    .final-meta { display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin:0 auto 20px; color:#dbeafe; }
+    .final-meta span { padding:8px 14px; border:1px solid rgba(103,232,249,.3); border-radius:999px; background:rgba(15,23,75,.7); }
+    .final-ranking-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:24px; margin-bottom:10px; color:#c7d2fe; font-weight:900; }
+    .final-ranking-list { display:grid; gap:9px; }
+    .final-rank-row { display:grid; grid-template-columns:54px 48px 1fr auto; align-items:center; gap:10px; padding:12px 16px; border-radius:16px; background:rgba(7,11,44,.76); border:1px solid rgba(129,140,248,.25); }
+    .final-rank-row:nth-child(1) { border-color:#facc15; box-shadow:0 0 18px rgba(250,204,21,.15); }
+    .final-rank-number { color:#67e8f9; font-weight:900; font-size:18px; }
+    .final-rank-avatar { font-size:29px; text-align:center; }
+    .final-rank-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:800; }
+    .final-rank-score { color:#fbbf24; font-size:18px; font-weight:900; }
+    .final-actions { display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-top:26px; }
   </style>
 </head>
 <body>
@@ -132,7 +147,7 @@
       <div class="ranking-title" id="rankingTitle">答题速度实时排名</div><div class="ranking" id="liveRanking"></div>
       <div style="text-align:center;margin-top:20px;"><button class="btn btn-warning" id="revealBtn" onclick="revealAnswer()" disabled style="display:none;">揭晓答案</button><button class="btn btn-success" id="nextBtn" onclick="nextQuestion()" disabled>等待本题揭晓</button></div>
     </div></div>
-    <div id="finished"><div class="card"><h2 style="text-align:center;margin-bottom:20px;">🏆 最终排名</h2><div class="podium" id="finalPodium"></div><div id="finalRanking"></div><div style="text-align:center;margin-top:24px;"><button class="btn btn-primary" onclick="location.reload()">再来一局</button></div></div></div>
+    <div id="finished"><div class="card final-card"><div class="final-kicker">GAME COMPLETE</div><h2 class="final-title">🏆 最终排名</h2><p class="final-subtitle">本局答题完成，感谢所有参与者</p><div class="final-meta"><span id="finalSessionMeta">0 人参与</span><span>主持人视图</span></div><div class="podium" id="finalPodium"></div><div class="final-ranking-heading"><span>完整成绩单</span><span>总积分</span></div><div class="final-ranking-list" id="finalRanking"></div><div class="final-actions"><button class="btn btn-primary" onclick="location.reload()">再来一局</button><button class="btn" onclick="backToSetup()">返回首页</button></div></div></div>
   </div>
   <script>
     const socket = io(); let currentCode = null; let questions = []; let timerInterval = null; let autoNextTimer = null; let timeLeft = 20; let questionEndPlayed = false; let currentQuestionIsLast = false; let currentOptionStats = [0, 0, 0, 0]; let speedRanking = []; let roundRevealed = false;
@@ -170,7 +185,8 @@
     function revealAnswer() { if (!currentQuestionIsLast) return; window.quizFx.finish(); socket.emit('reveal-answer', { code: currentCode }); }
     socket.on('final-reveal-ready', () => { if (currentQuestionIsLast) document.getElementById('revealBtn').disabled = false; });
     socket.on('reveal', data => { document.querySelectorAll('.opt').forEach((el, i) => { if (i === data.correctIndex) { el.style.outline = '4px solid #fff'; el.style.transform = 'scale(1.05)'; } else el.style.opacity = '0.5'; }); renderOptionStats(data.optionStats, true); setRoundState(true); renderLiveRanking(data.ranking); document.getElementById('revealBtn').style.display = 'none'; document.getElementById('nextBtn').disabled = currentQuestionIsLast; document.getElementById('nextBtn').textContent = currentQuestionIsLast ? '本局结束' : '下一题'; });
-    socket.on('score-update', ranking => { if (roundRevealed) renderLiveRanking(ranking); }); socket.on('game-over', data => { window.quizFx.celebrate(); document.getElementById('game').style.display = 'none'; document.getElementById('finished').style.display = 'block'; renderPodium(data.ranking); document.getElementById('finalRanking').innerHTML = data.ranking.slice(3).map(p => `<div class="rank-item"><span>${p.avatar || '😀'} #${p.rank} ${p.nickname}</span><span>${p.score} 分</span></div>`).join('') || '<p style="text-align:center;color:#94a3b8">没有第四名以后的参与者</p>'; });
+    socket.on('score-update', ranking => { if (roundRevealed) renderLiveRanking(ranking); }); socket.on('game-over', data => { window.quizFx.celebrate(); document.getElementById('game').style.display = 'none'; document.getElementById('finished').style.display = 'block'; document.getElementById('finalSessionMeta').textContent = `${data.ranking.length} 人参与`; renderPodium(data.ranking); renderFinalRanking(data.ranking); });
+    function renderFinalRanking(ranking) { const container = document.getElementById('finalRanking'); container.replaceChildren(); if (!ranking.length) { container.textContent = '没有参与者'; return; } ranking.forEach(p => { const row = document.createElement('div'); row.className = 'final-rank-row'; const rank = document.createElement('span'); rank.className = 'final-rank-number'; rank.textContent = `#${p.rank}`; const avatar = document.createElement('span'); avatar.className = 'final-rank-avatar'; avatar.textContent = p.avatar || '😀'; const name = document.createElement('span'); name.className = 'final-rank-name'; name.textContent = p.nickname || '玩家'; const score = document.createElement('span'); score.className = 'final-rank-score'; score.textContent = `${p.score || 0} 分`; row.append(rank, avatar, name, score); container.appendChild(row); }); }
     function renderPodium(ranking) { const podium = document.getElementById('finalPodium'); const places = [{ rank: 2, cls: 'second', label: '🥈' }, { rank: 1, cls: 'first', label: '🥇' }, { rank: 3, cls: 'third', label: '🥉' }]; podium.innerHTML = places.map(place => { const player = ranking[place.rank - 1]; if (!player) return ''; return `<div class="podium-place ${place.cls}"><div class="podium-avatar">${player.avatar || '😀'}</div><div class="podium-player">${player.nickname}</div><div class="podium-block"><div>${place.label}</div><small>${player.score} 分</small></div></div>`; }).join(''); }
   </script>
 </body>

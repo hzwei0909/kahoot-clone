@@ -236,6 +236,7 @@ io.on('connection', (socket) => {
       const ranking = Array.from(room.players.values())
         .sort((a, b) => b.score - a.score)
         .map((p, i) => ({
+          id: p.id,
           rank: i + 1,
           nickname: p.nickname,
           avatar: p.avatar,
@@ -378,8 +379,9 @@ io.on('connection', (socket) => {
       io.to(room.code).emit('game-phase', { phase: room.phase, startedAt: room.phaseStartedAt });
       const finalRanking = Array.from(room.players.values())
         .sort((a, b) => b.score - a.score)
-        .map((p, i) => ({ rank: i + 1, nickname: p.nickname, avatar: p.avatar, score: p.score }));
-      io.to(room.code).emit('game-over', { ranking: finalRanking });
+        .map((p, i) => ({ id: p.id, rank: i + 1, nickname: p.nickname, avatar: p.avatar, score: p.score }));
+      // 给参与者留出一个完整的“本题结果”停留时间，再切换到最终领奖台。
+      setTimeout(() => io.to(room.code).emit('game-over', { ranking: finalRanking }), 3500);
     }
   }
 
